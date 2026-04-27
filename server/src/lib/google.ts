@@ -43,6 +43,8 @@ export interface CourtSummary {
 }
 
 interface PlacesNearbyResponse {
+  status: string;
+  error_message?: string;
   results: Array<{
     place_id: string;
     name: string;
@@ -79,7 +81,17 @@ export async function fetchNearbyCourts(
     if (!res.ok) throw new Error(`Places HTTP ${res.status}`);
     const data = (await res.json()) as PlacesNearbyResponse;
 
-    const courts: CourtSummary[] = data.results.map((r) => ({
+    // Google returns 200 even when the call is rejected (REQUEST_DENIED for
+    // a key with HTTP-referrer restrictions, OVER_QUERY_LIMIT, etc.).
+    // ZERO_RESULTS is a legitimate "no courts here" response — let that
+    // through.
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      throw new Error(
+        `Places API ${data.status}${data.error_message ? `: ${data.error_message}` : ''}`,
+      );
+    }
+
+    const courts: CourtSummary[] = (data.results ?? []).map((r) => ({
       placeId: r.place_id,
       name: r.name,
       lat: r.geometry.location.lat,
