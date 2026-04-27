@@ -60,8 +60,12 @@ Settings → **Networking → Generate Domain**. Railway gives you something
 like `courtcast-server-production.up.railway.app`. Copy this — you'll
 paste it into Netlify in step 2.
 
-The first deploy will run `prisma migrate deploy` automatically (it's in
-the `start` script), so the schema is applied on first boot.
+The `start` script runs `prisma db push --accept-data-loss` before
+booting, so the schema is synced from `prisma/schema.prisma` directly
+on first boot. This is the MVP-friendly path — no migration files
+required. When the project graduates beyond MVP, replace with
+`prisma migrate deploy` and commit a generated `prisma/migrations/`
+directory (see `npx prisma migrate diff --from-empty --to-schema-datamodel`).
 
 ### 1e. Smoke test
 
