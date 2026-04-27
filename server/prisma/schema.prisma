@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  googleId    String       @unique
+  email       String       @unique
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime     @default(now())
+  savedCourts SavedCourt[]
+  sessions    Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Court {
+  placeId   String       @id
+  name      String
+  lat       Float
+  lng       Float
+  address   String?
+  fetchedAt DateTime     @default(now())
+  savedBy   SavedCourt[]
+}
+
+model SavedCourt {
+  userId    String
+  placeId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  court     Court    @relation(fields: [placeId], references: [placeId])
+  createdAt DateTime @default(now())
+
+  @@id([userId, placeId])
+  @@index([userId])
+}
+
+model WeatherCache {
+  geohash   String   @id
+  payload   Json
+  fetchedAt DateTime @default(now())
+}
+
+model PlacesCache {
+  geohash   String   @id
+  payload   Json
+  fetchedAt DateTime @default(now())
+}
