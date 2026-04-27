@@ -1,4 +1,4 @@
-import type { Court, CourtDetail, SavedCourtDetail, User, WeatherSummary, PlayabilityScore } from '../types';
+import type { Court, CourtDetail, SavedCourtDetail, User, WeatherSummary, PlayabilityScore, Sport } from '../types';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(path, {
@@ -24,8 +24,9 @@ export const api = {
     request<{ user: User }>('/api/auth/google', { method: 'POST', body: JSON.stringify({ idToken }) }),
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
-  nearbyCourts: (lat: number, lng: number, radius?: number) => {
-    const qs = new URLSearchParams({ lat: String(lat), lng: String(lng) });
+  nearbyCourts: (lat: number, lng: number, sport: Sport, keyword?: string, radius?: number) => {
+    const qs = new URLSearchParams({ lat: String(lat), lng: String(lng), sport });
+    if (keyword) qs.set('keyword', keyword);
     if (radius) qs.set('radius', String(radius));
     return request<{ courts: Court[]; stale: boolean }>(`/api/courts?${qs}`);
   },
@@ -52,4 +53,10 @@ export const api = {
 
   unsaveCourt: (placeId: string) =>
     request<void>(`/api/me/courts/${placeId}`, { method: 'DELETE' }),
+
+  saveCustomCourt: (input: { lat: number; lng: number; name: string }) =>
+    request<{ court: SavedCourtDetail }>('/api/me/courts/custom', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 };

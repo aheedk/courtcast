@@ -1,5 +1,18 @@
 export type PlayabilityScore = 'GOOD' | 'OK' | 'BAD';
 
+export type Sport = 'tennis' | 'basketball';
+export const SPORTS: readonly Sport[] = ['tennis', 'basketball'] as const;
+
+export const SPORT_LABEL: Record<Sport, string> = {
+  tennis: 'Tennis',
+  basketball: 'Basketball',
+};
+
+export const SPORT_EMOJI: Record<Sport, string> = {
+  tennis: '🎾',
+  basketball: '🏀',
+};
+
 export interface User {
   id: string;
   email: string;
@@ -13,6 +26,8 @@ export interface Court {
   lat: number;
   lng: number;
   address: string | null;
+  isCustom?: boolean;
+  addedByUserId?: string | null;
 }
 
 export interface WeatherSummary {
