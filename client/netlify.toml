@@ -1,0 +1,11 @@
+[build]
+  base = "client"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Redirects/rewrites are written to dist/_redirects by the build script
+# (scripts/gen-redirects.mjs) using the BACKEND_URL env var configured
+# in the Netlify dashboard.

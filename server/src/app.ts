@@ -15,6 +15,10 @@ import meCourtsRouter from './routes/meCourts';
 export function createApp() {
   const app = express();
 
+  // Trust the platform proxy (Railway, Render, etc.) so req.protocol and
+  // req.ip reflect the original client request, not the internal hop.
+  app.set('trust proxy', 1);
+
   app.use(cors({ origin: env.clientOrigin, credentials: true }));
   app.use(express.json({ limit: '64kb' }));
   app.use(cookieParser());

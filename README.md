@@ -37,8 +37,13 @@ npm run dev --prefix client     # http://localhost:5173
 ```
 
 Full step-by-step (including how to get each API key) is in
-[`SETUP.md`](./SETUP.md). Design rationale is in
+[`SETUP.md`](./SETUP.md). Production deploy (Netlify + Railway) is in
+[`DEPLOY.md`](./DEPLOY.md). Design rationale is in
 [`docs/superpowers/specs/2026-04-27-courtcast-design.md`](./docs/superpowers/specs/2026-04-27-courtcast-design.md).
+
+The frontend is also a PWA — add it to your phone's home screen from
+Safari (Share → Add to Home Screen) or Chrome (⋮ → Install app) and it
+runs full-screen like a native app.
 
 ## Project layout
 
