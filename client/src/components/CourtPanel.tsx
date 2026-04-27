@@ -50,7 +50,10 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
             <h2 className="text-lg font-bold leading-tight">
               {detail.data?.court.name ?? (detail.isLoading ? 'Loading…' : 'Court')}
             </h2>
-            {detail.data?.court.address && (
+            {detail.data?.court.isCustom && (
+              <p className="text-xs text-good font-semibold mt-1">Your custom spot</p>
+            )}
+            {detail.data?.court.address && !detail.data?.court.isCustom && (
               <p className="text-sm text-neutral-500 mt-1">{detail.data.court.address}</p>
             )}
           </div>
