@@ -42,6 +42,18 @@ describe('api smoke', () => {
     expect(res.status).toBe(401);
   });
 
+  it('POST /api/me/courts/custom → 401 without session', async () => {
+    const res = await request(app)
+      .post('/api/me/courts/custom')
+      .send({ lat: 40, lng: -74, name: 'Backyard' });
+    expect(res.status).toBe(401);
+  });
+
+  it('DELETE /api/me/courts/:placeId → 401 without session', async () => {
+    const res = await request(app).delete('/api/me/courts/somePlaceId');
+    expect(res.status).toBe(401);
+  });
+
   it('GET /api/courts with bad lat → 400', async () => {
     const res = await request(app).get('/api/courts?lat=999&lng=0');
     expect(res.status).toBe(400);

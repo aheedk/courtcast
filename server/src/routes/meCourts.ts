@@ -71,11 +71,64 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+const customSchema = z.object({
+  lat: z.coerce.number().gte(-90).lte(90),
+  lng: z.coerce.number().gte(-180).lte(180),
+  name: z.string().trim().min(1).max(80),
+});
+
+router.post('/custom', async (req, res, next) => {
+  try {
+    const { lat, lng, name } = customSchema.parse(req.body);
+    const userId = req.user!.id;
+
+    // Synthetic placeId for custom courts.
+    const placeId = `custom:${userId}:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const created = await prisma.$transaction(async (tx) => {
+      const court = await tx.court.create({
+        data: { placeId, name, lat, lng, isCustom: true, addedByUserId: userId },
+      });
+      const saved = await tx.savedCourt.create({
+        data: { userId, placeId: court.placeId },
+      });
+      return { court, saved };
+    });
+
+    let weather = null;
+    let scoreVal = null;
+    let stale = true;
+    try {
+      const w = await fetchWeather(lat, lng);
+      weather = w.weather;
+      scoreVal = score(w.weather);
+      stale = w.stale;
+    } catch {
+      // weather may transiently fail — saving still succeeds
+    }
+
+    res.status(201).json({
+      court: { ...created.court, savedAt: created.saved.createdAt, weather, score: scoreVal, stale },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete('/:placeId', async (req, res, next) => {
   try {
-    await prisma.savedCourt.deleteMany({
-      where: { userId: req.user!.id, placeId: req.params.placeId },
-    });
+    const userId = req.user!.id;
+    const { placeId } = req.params;
+
+    await prisma.savedCourt.deleteMany({ where: { userId, placeId } });
+
+    // If the court is a user-owned custom one, it has no other consumers —
+    // delete the Court row too.
+    const court = await prisma.court.findUnique({ where: { placeId } });
+    if (court?.isCustom && court.addedByUserId === userId) {
+      await prisma.court.delete({ where: { placeId } });
+    }
+
     res.status(204).end();
   } catch (err) {
     next(err);
