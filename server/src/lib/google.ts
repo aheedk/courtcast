@@ -2,6 +2,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { env } from './env';
 import { getCached, putCached, geohashFor, TTL, PRECISION } from './cache';
 import { prisma } from './prisma';
+import { buildPlacesKeyword, type Sport } from './sport';
 
 const oauthClient = new OAuth2Client(env.googleOauthClientId);
 
@@ -62,9 +63,18 @@ export async function fetchNearbyCourts(
   lat: number,
   lng: number,
   radiusMeters: number,
+  sport: Sport = 'tennis',
+  userKeyword?: string,
 ): Promise<{ courts: CourtSummary[]; stale: boolean }> {
-  const geohash = geohashFor(lat, lng, PRECISION.places);
-  const cached = await getCached<CourtSummary[]>('placesCache', geohash, TTL.placesMs);
+  const keyword = buildPlacesKeyword(sport, userKeyword);
+  const hasUserKeyword = !!(userKeyword && userKeyword.trim());
+
+  // Cache key includes sport so tennis and basketball pin sets don't collide.
+  // Queries with a user keyword bypass cache (high cardinality).
+  const cacheKey = `${geohashFor(lat, lng, PRECISION.places)}:${sport}`;
+  const cached = hasUserKeyword
+    ? null
+    : await getCached<CourtSummary[]>('placesCache', cacheKey, TTL.placesMs);
   if (cached && !cached.stale) {
     return { courts: cached.payload, stale: false };
   }
@@ -73,8 +83,7 @@ export async function fetchNearbyCourts(
     const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
     url.searchParams.set('location', `${lat},${lng}`);
     url.searchParams.set('radius', String(radiusMeters));
-    url.searchParams.set('keyword', 'tennis court');
-    url.searchParams.set('type', 'park');
+    url.searchParams.set('keyword', keyword);
     url.searchParams.set('key', env.googlePlacesKey);
 
     const res = await fetch(url.toString());
@@ -99,7 +108,9 @@ export async function fetchNearbyCourts(
       address: r.vicinity ?? null,
     }));
 
-    await putCached('placesCache', geohash, courts);
+    if (!hasUserKeyword) {
+      await putCached('placesCache', cacheKey, courts);
+    }
 
     // Upsert into Court table so SavedCourt FK is always satisfiable.
     await Promise.all(
