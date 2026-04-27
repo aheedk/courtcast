@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(cuid())
-  googleId    String       @unique
-  email       String       @unique
-  name        String?
-  avatarUrl   String?
-  createdAt   DateTime     @default(now())
-  savedCourts SavedCourt[]
-  sessions    Session[]
+  id           String       @id @default(cuid())
+  googleId     String       @unique
+  email        String       @unique
+  name         String?
+  avatarUrl    String?
+  createdAt    DateTime     @default(now())
+  savedCourts  SavedCourt[]
+  sessions     Session[]
+  customCourts Court[]      @relation("UserCustomCourts")
 }
 
 model Session {
@@ -29,13 +30,18 @@ model Session {
 }
 
 model Court {
-  placeId   String       @id
-  name      String
-  lat       Float
-  lng       Float
-  address   String?
-  fetchedAt DateTime     @default(now())
-  savedBy   SavedCourt[]
+  placeId       String       @id
+  name          String
+  lat           Float
+  lng           Float
+  address       String?
+  isCustom      Boolean      @default(false)
+  addedByUserId String?
+  addedBy       User?        @relation("UserCustomCourts", fields: [addedByUserId], references: [id])
+  fetchedAt     DateTime     @default(now())
+  savedBy       SavedCourt[]
+
+  @@index([addedByUserId])
 }
 
 model SavedCourt {
