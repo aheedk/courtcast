@@ -43,7 +43,7 @@ export function LoginPage({ user }: { user: User | null }) {
         },
       });
       if (buttonRef.current) {
-        g.renderButton(buttonRef.current, { theme: 'outline', size: 'large', shape: 'pill', width: 280 });
+        g.renderButton(buttonRef.current, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', width: 280 });
       }
       return true;
     };
