@@ -7,13 +7,17 @@
   NODE_VERSION = "20"
 
 # /api/* is proxied to the Railway backend so cookies stay same-origin.
-# Hardcoded here (rather than env-driven via gen-redirects.mjs) so this
-# can't silently break when a Netlify env var is missing.
+# Order matters: this MUST come before the catch-all SPA fallback below,
+# otherwise the fallback would shadow API requests with index.html.
 [[redirects]]
   from = "/api/*"
   to = "https://courtcast-production.up.railway.app/api/:splat"
   status = 200
   force = true
 
-# The SPA fallback (/* → /index.html) is still emitted by
-# scripts/gen-redirects.mjs into dist/_redirects.
+# SPA fallback so client-side routes (/login, /my-courts) work on direct
+# navigation and refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

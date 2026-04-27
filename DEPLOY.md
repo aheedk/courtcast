@@ -89,9 +89,12 @@ not, check the deploy logs in Railway.
 
 | Key | Value |
 |---|---|
-| `BACKEND_URL` | `https://YOUR-RAILWAY-URL` (from step 1d, no trailing slash) |
 | `VITE_GOOGLE_MAPS_KEY` | same as your `SETUP.md` value |
 | `VITE_GOOGLE_OAUTH_CLIENT_ID` | same as your `SETUP.md` value |
+
+The Railway URL is hardcoded in `client/netlify.toml` rather than
+injected at build time — if you ever change it, edit that file and
+push.
 
 ### 2c. Deploy
 
@@ -151,9 +154,10 @@ app in **Testing** mode and add up to 100 test users by email.
 
 ## Troubleshooting
 
-- **Netlify build fails: `BACKEND_URL is not set`** — that's a warning,
-  not a failure. The build will succeed but the `/api/*` proxy line
-  won't be written. Set `BACKEND_URL` and redeploy.
+- **`/api/*` requests return your `index.html` instead of JSON** —
+  the proxy rule order in `client/netlify.toml` is wrong (the SPA
+  fallback `/* → /index.html` must come *after* the `/api/*` proxy).
+  Or the Railway URL in that file is stale.
 - **`/api/health` works but `/api/courts` returns 502** — the Google
   Places key probably doesn't have your Railway/Netlify domain in its
   HTTP referrer restrictions, or Places API isn't enabled.
