@@ -1,0 +1,9 @@
+{
+  "name": "courtclimate",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "cd server && npm ci && npm run build",
+    "start": "cd server && npm run start"
+  }
+}
