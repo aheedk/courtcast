@@ -1,10 +1,11 @@
-export type Sport = 'tennis' | 'basketball' | 'pickleball';
-export const SPORTS: readonly Sport[] = ['tennis', 'basketball', 'pickleball'] as const;
+export type Sport = 'tennis' | 'basketball' | 'pickleball' | 'custom';
+export const SPORTS: readonly Sport[] = ['tennis', 'basketball', 'pickleball', 'custom'] as const;
 
 const SPORT_KEYWORD: Record<Sport, string> = {
   tennis: 'tennis court',
   basketball: 'basketball court',
   pickleball: 'pickleball court',
+  custom: '',
 };
 
 export function buildPlacesKeyword(sport: Sport, userKeyword?: string): string {
