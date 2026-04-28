@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
+import { useScoreFor } from '../stores/thresholds';
 import type { SavedCourtDetail } from '../types';
 import { SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
@@ -42,6 +43,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
   });
 
   const display = court.nickname || court.name;
+  const userScore = useScoreFor(court.weather, court.score);
 
   const menuItems = [
     { label: 'Rename', onSelect: () => setRenaming(true) },
@@ -85,7 +87,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
           </div>
 
           <div className="flex items-start gap-2 shrink-0">
-            {court.score && <PlayabilityBadge score={court.score} />}
+            {userScore && <PlayabilityBadge score={userScore} />}
             <CardMenu items={menuItems} />
           </div>
         </div>
