@@ -8,14 +8,16 @@ import { ListsTab } from '../components/ListsTab';
 import { ListView } from '../components/ListView';
 import { CustomSavesSection } from '../components/CustomSavesSection';
 import { useUi } from '../stores/ui';
+import { useEnabledSports } from '../stores/enabledSports';
 import type { Sport, User } from '../types';
-import { SPORTS, SPORT_LABEL, SPORT_EMOJI } from '../types';
+import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 
 type TabValue = 'all' | Sport;
 
 export function MyCourtsPage({ user }: { user: User }) {
   const { selectedPlaceId, selectCourt } = useUi();
   const saved = useQuery({ queryKey: queryKeys.savedCourts, queryFn: api.savedCourts });
+  const [enabledSports] = useEnabledSports();
   const [tab, setTab] = useState<TabValue>('all');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
@@ -25,7 +27,7 @@ export function MyCourtsPage({ user }: { user: User }) {
 
   const tabs: { value: TabValue; label: string }[] = [
     { value: 'all', label: 'All' },
-    ...SPORTS.map((s) => ({ value: s as TabValue, label: `${SPORT_EMOJI[s]} ${SPORT_LABEL[s]}` })),
+    ...enabledSports.map((s) => ({ value: s as TabValue, label: `${SPORT_EMOJI[s]} ${SPORT_LABEL[s]}` })),
   ];
 
   return (
