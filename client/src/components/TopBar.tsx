@@ -1,6 +1,4 @@
 import { Link, NavLink } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../lib/api';
 import type { User } from '../types';
 
 const navLink =
@@ -8,15 +6,6 @@ const navLink =
 const navLinkActive = 'text-neutral-900 bg-neutral-100';
 
 export function TopBar({ user }: { user: User | null }) {
-  const qc = useQueryClient();
-  const logout = useMutation({
-    mutationFn: api.logout,
-    onSuccess: () => {
-      qc.clear();
-      window.location.href = '/login';
-    },
-  });
-
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-neutral-200">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
@@ -32,16 +21,18 @@ export function TopBar({ user }: { user: User | null }) {
             My Courts
           </NavLink>
           {user ? (
-            <button
-              onClick={() => logout.mutate()}
+            <NavLink
+              to="/settings"
               className="ml-1 flex items-center gap-2 px-1 py-1 rounded-full hover:bg-neutral-100"
-              title="Sign out"
+              title="Settings"
             >
               {user.avatarUrl && (
                 <img src={user.avatarUrl} alt="" className="w-7 h-7 rounded-full" />
               )}
-              <span className="text-sm text-neutral-600 hidden sm:inline">Sign out</span>
-            </button>
+              <span className="text-sm text-neutral-600 hidden sm:inline">
+                {user.name?.split(' ')[0] ?? 'You'}
+              </span>
+            </NavLink>
           ) : (
             <NavLink
               to="/login"
