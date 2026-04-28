@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
+import { useSport } from '../stores/sport';
 import type { User } from '../types';
+import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
 import { WeatherStats } from './WeatherStats';
 
@@ -13,6 +15,8 @@ interface Props {
 
 export function CourtPanel({ placeId, user, onClose }: Props) {
   const qc = useQueryClient();
+  const [sport] = useSport();
+
   const detail = useQuery({
     queryKey: queryKeys.court(placeId),
     queryFn: () => api.court(placeId),
@@ -24,14 +28,15 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
     enabled: !!user,
   });
 
-  const isSaved = saved.data?.courts.some((c) => c.placeId === placeId) ?? false;
+  const isSavedForSport =
+    saved.data?.courts.some((c) => c.placeId === placeId && c.sport === sport) ?? false;
 
   const save = useMutation({
-    mutationFn: () => api.saveCourt(placeId),
+    mutationFn: () => api.saveCourt(placeId, sport),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedCourts }),
   });
   const unsave = useMutation({
-    mutationFn: () => api.unsaveCourt(placeId),
+    mutationFn: () => api.unsaveCourt(placeId, sport),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedCourts }),
   });
 
@@ -88,13 +93,13 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
                 <p className="text-sm text-neutral-500">
                   <a href="/login" className="text-good underline">Sign in</a> to save this court to your list.
                 </p>
-              ) : isSaved ? (
+              ) : isSavedForSport ? (
                 <button
                   onClick={() => unsave.mutate()}
                   disabled={unsave.isPending}
                   className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
                 >
-                  {unsave.isPending ? 'Removing…' : 'Remove from My Courts'}
+                  {unsave.isPending ? 'Removing…' : `Remove from ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
                 </button>
               ) : (
                 <button
@@ -102,7 +107,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
                   disabled={save.isPending}
                   className="w-full py-3 rounded-xl bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
                 >
-                  {save.isPending ? 'Saving…' : 'Save to My Courts'}
+                  {save.isPending ? 'Saving…' : `Save to ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
                 </button>
               )}
             </div>
