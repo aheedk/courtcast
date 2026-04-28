@@ -101,8 +101,9 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
 
       {addingToList && (
         <AddToListMenu
-          placeId={court.placeId}
-          sport={court.sport}
+          onAdd={async (listId) => {
+            await api.addToList(listId, court.placeId, court.sport);
+          }}
           onClose={() => setAddingToList(false)}
         />
       )}
