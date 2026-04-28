@@ -126,6 +126,7 @@ export function MapPage({ user }: { user: User | null }) {
       {pendingPin && addMode && (
         <AddSpotSheet
           pin={pendingPin}
+          sport={sport}
           onClose={() => setPendingPin(null)}
           onSaved={() => {
             setPendingPin(null);

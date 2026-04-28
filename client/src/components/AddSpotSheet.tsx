@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
+import type { Sport } from '../types';
+import { SPORT_EMOJI, SPORT_LABEL } from '../types';
 
 interface Props {
   pin: { lat: number; lng: number };
+  sport: Sport;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function AddSpotSheet({ pin, onClose, onSaved }: Props) {
+export function AddSpotSheet({ pin, sport, onClose, onSaved }: Props) {
   const [name, setName] = useState('');
   const qc = useQueryClient();
 
   const save = useMutation({
-    mutationFn: () => api.saveCustomCourt({ lat: pin.lat, lng: pin.lng, name: name.trim() }),
+    mutationFn: () => api.saveCustomCourt({ lat: pin.lat, lng: pin.lng, name: name.trim(), sport }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.savedCourts });
       onSaved();
@@ -27,7 +30,7 @@ export function AddSpotSheet({ pin, onClose, onSaved }: Props) {
         <div>
           <h2 className="text-lg font-bold">Name this spot</h2>
           <p className="text-xs text-neutral-500 mt-1">
-            {pin.lat.toFixed(4)}, {pin.lng.toFixed(4)}
+            Saving as {SPORT_EMOJI[sport]} {SPORT_LABEL[sport]} · {pin.lat.toFixed(4)}, {pin.lng.toFixed(4)}
           </p>
         </div>
         <button onClick={onClose} aria-label="Close" className="text-neutral-400 text-2xl leading-none">
