@@ -56,7 +56,16 @@ router.post('/logout', async (req, res, next) => {
     if (sessionId) {
       await prisma.session.deleteMany({ where: { id: sessionId } });
     }
-    res.clearCookie(SESSION_COOKIE, { path: '/' });
+    // Match the attributes used when setting the cookie — clearCookie
+    // defaults can mismatch (secure/sameSite) and leave the cookie in
+    // the browser. Even if cookie removal fails, the session row is
+    // already deleted above so /api/auth/me will 401 next request.
+    res.clearCookie(SESSION_COOKIE, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+    });
     res.status(204).end();
   } catch (err) {
     next(err);
