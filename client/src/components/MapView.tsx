@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
-import type { Court } from '../types';
+import type { PlayabilityScore } from '../types';
 import { env } from '../lib/env';
+
+export interface PinForMap {
+  placeId: string;
+  name: string;
+  lat: number;
+  lng: number;
+  score: PlayabilityScore | null;
+  isSavedForSport: boolean;
+}
 
 interface Props {
   center: { lat: number; lng: number };
-  courts: Court[];
-  customCourts?: Court[];
+  pins: PinForMap[];
   selectedPlaceId: string | null;
   onSelect: (placeId: string) => void;
   addMode?: boolean;
@@ -25,10 +33,26 @@ const mapOptions: google.maps.MapOptions = {
 
 const PLACES_LIBS: ('places')[] = ['places'];
 
+const COLOR: Record<PlayabilityScore, string> = {
+  GOOD: '#16a34a',
+  OK: '#eab308',
+  BAD: '#dc2626',
+};
+const GRAY = '#737373';
+
+// 5-point star path in unit space (outer radius = 1). With Google
+// Maps Symbol `scale`, this matches CIRCLE's "scale = radius in px"
+// convention so circles and stars sit at comparable visual weights.
+const STAR_PATH =
+  'M 0,-1 L 0.294,-0.309 1.039,-0.309 0.445,0.118 0.618,0.809 0,0.45 -0.618,0.809 -0.445,0.118 -1.039,-0.309 -0.294,-0.309 Z';
+
+function colorFor(score: PlayabilityScore | null): string {
+  return score ? COLOR[score] : GRAY;
+}
+
 export function MapView({
   center,
-  courts,
-  customCourts = [],
+  pins,
   selectedPlaceId,
   onSelect,
   addMode = false,
@@ -44,7 +68,6 @@ export function MapView({
   const memoCenter = useMemo(() => center, [center.lat, center.lng]);
   const mapRef = useRef<google.maps.Map | null>(null);
 
-  // When `center` changes externally (e.g., from a Place selection), pan to it.
   useEffect(() => {
     if (mapRef.current) {
       mapRef.current.panTo(memoCenter);
@@ -80,39 +103,27 @@ export function MapView({
         onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
       }}
     >
-      {courts.map((c) => (
-        <Marker
-          key={c.placeId}
-          position={{ lat: c.lat, lng: c.lng }}
-          title={c.name}
-          onClick={() => onSelect(c.placeId)}
-          icon={{
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: c.placeId === selectedPlaceId ? 10 : 7,
-            fillColor: c.placeId === selectedPlaceId ? '#16a34a' : '#171717',
-            fillOpacity: 1,
-            strokeColor: '#fff',
-            strokeWeight: 2,
-          }}
-        />
-      ))}
-
-      {customCourts.map((c) => (
-        <Marker
-          key={c.placeId}
-          position={{ lat: c.lat, lng: c.lng }}
-          title={c.name}
-          onClick={() => onSelect(c.placeId)}
-          icon={{
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: c.placeId === selectedPlaceId ? 10 : 8,
-            fillColor: c.placeId === selectedPlaceId ? '#16a34a' : '#ffffff',
-            fillOpacity: 1,
-            strokeColor: '#16a34a',
-            strokeWeight: 3,
-          }}
-        />
-      ))}
+      {pins.map((p) => {
+        const isSelected = p.placeId === selectedPlaceId;
+        const baseScale = p.isSavedForSport ? 9 : 7;
+        const scale = isSelected ? baseScale * 1.3 : baseScale;
+        return (
+          <Marker
+            key={p.placeId}
+            position={{ lat: p.lat, lng: p.lng }}
+            title={p.name}
+            onClick={() => onSelect(p.placeId)}
+            icon={{
+              path: p.isSavedForSport ? STAR_PATH : google.maps.SymbolPath.CIRCLE,
+              scale,
+              fillColor: colorFor(p.score),
+              fillOpacity: 1,
+              strokeColor: '#fff',
+              strokeWeight: isSelected ? 3 : 2,
+            }}
+          />
+        );
+      })}
 
       {pendingPin && (
         <Marker
