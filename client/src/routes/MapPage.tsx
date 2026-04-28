@@ -29,10 +29,17 @@ export function MapPage({ user }: { user: User | null }) {
   const [addMode, setAddMode] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Custom mode with no keyword → don't auto-fetch. The user is
+  // expected to either type a keyword in search, drop a custom pin,
+  // or rely on their already-saved custom courts (rendered separately
+  // via customCourts).
+  const customEmpty = sport === 'custom' && !keyword.trim();
+
   const courts = useQuery({
     queryKey: queryKeys.nearbyCourts(center.lat, center.lng, sport, keyword),
     queryFn: () => api.nearbyCourts(center.lat, center.lng, sport, keyword || undefined),
     staleTime: 60 * 60 * 1000,
+    enabled: !customEmpty,
   });
 
   const saved = useQuery({
@@ -98,13 +105,19 @@ export function MapPage({ user }: { user: User | null }) {
         </div>
       )}
 
+      {customEmpty && !addMode && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 bg-white shadow-md border border-neutral-200 rounded-full px-4 py-1 text-[11px] text-neutral-600">
+          Custom mode — search a place or use + Add a spot
+        </div>
+      )}
+
       {courts.isError && (
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 bg-white shadow-md rounded-full px-4 py-1.5 text-sm text-bad">
           Couldn't fetch courts. Try again.
         </div>
       )}
 
-      {courts.data && courts.data.courts.length === 0 && !courts.isLoading && (
+      {courts.data && courts.data.courts.length === 0 && !courts.isLoading && !customEmpty && (
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 bg-white shadow-md rounded-full px-4 py-1.5 text-sm text-neutral-600">
           No {sport} courts found here. Try another spot or sport.
         </div>
