@@ -85,7 +85,7 @@ export function MapPage({ user }: { user: User | null }) {
   ];
 
   return (
-    <div className="relative h-[calc(100vh-3.5rem)]">
+    <div className="relative h-[calc(100dvh-3.5rem)]">
       <div className="absolute top-3 left-0 right-0 z-20 flex flex-col gap-2 pointer-events-none">
         <div className="pointer-events-auto">
           <SearchBar
