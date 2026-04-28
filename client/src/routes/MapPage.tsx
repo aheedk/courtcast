@@ -5,21 +5,20 @@ import { queryKeys } from '../lib/queryClient';
 import { useUi } from '../stores/ui';
 import { useSport } from '../stores/sport';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { MapView } from '../components/MapView';
+import { MapView, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
 import { SearchBar } from '../components/SearchBar';
 import { SportChips } from '../components/SportChips';
 import { AddSpotFab } from '../components/AddSpotFab';
 import { AddSpotSheet } from '../components/AddSpotSheet';
 import { MapLegend } from '../components/MapLegend';
-import type { User, Court } from '../types';
+import type { User } from '../types';
 
 export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
   const { selectedPlaceId, selectCourt } = useUi();
   const [sport, setSport] = useSport();
 
-  // Map center can be overridden by Place selections; defaults to geo.
   const [center, setCenter] = useState(geoPosition);
   useEffect(() => {
     setCenter(geoPosition);
@@ -29,10 +28,6 @@ export function MapPage({ user }: { user: User | null }) {
   const [addMode, setAddMode] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Custom mode with no keyword → don't auto-fetch. The user is
-  // expected to either type a keyword in search, drop a custom pin,
-  // or rely on their already-saved custom courts (rendered separately
-  // via customCourts).
   const customEmpty = sport === 'custom' && !keyword.trim();
 
   const courts = useQuery({
@@ -48,23 +43,41 @@ export function MapPage({ user }: { user: User | null }) {
     enabled: !!user,
   });
 
-  // Custom courts owned by the current user — pulled from the saved list.
-  const customCourts: Court[] =
-    saved.data?.courts
-      .filter((c) => c.isCustom)
-      .map((c) => ({
+  // Build the unified pin set, sport-scoped:
+  //   1) Places-discovered courts at the current map center
+  //   2) Plus any of the user's saved-for-current-sport courts not in 1
+  // Each pin carries a score (from saved entry if available, else from
+  // the Places hydration) and a flag for star-vs-circle rendering.
+  const savedForSport = (saved.data?.courts ?? []).filter((c) => c.sport === sport);
+  const placesPins = courts.data?.courts ?? [];
+  const savedById = new Map(savedForSport.map((s) => [s.placeId, s]));
+
+  const pins: PinForMap[] = [
+    ...placesPins.map((c) => {
+      const s = savedById.get(c.placeId);
+      return {
         placeId: c.placeId,
         name: c.name,
         lat: c.lat,
         lng: c.lng,
-        address: c.address,
-        isCustom: true,
-        addedByUserId: c.addedByUserId,
-      })) ?? [];
+        score: s?.score ?? c.score ?? null,
+        isSavedForSport: !!s,
+      };
+    }),
+    ...savedForSport
+      .filter((s) => !placesPins.some((p) => p.placeId === s.placeId))
+      .map((s) => ({
+        placeId: s.placeId,
+        name: s.name,
+        lat: s.lat,
+        lng: s.lng,
+        score: s.score,
+        isSavedForSport: true,
+      })),
+  ];
 
   return (
     <div className="relative h-[calc(100vh-3.5rem)]">
-      {/* Overlays */}
       <div className="absolute top-3 left-0 right-0 z-20 flex flex-col gap-2 pointer-events-none">
         <div className="pointer-events-auto">
           <SearchBar
@@ -88,8 +101,7 @@ export function MapPage({ user }: { user: User | null }) {
 
       <MapView
         center={center}
-        courts={courts.data?.courts ?? []}
-        customCourts={customCourts}
+        pins={pins}
         selectedPlaceId={selectedPlaceId}
         onSelect={selectCourt}
         addMode={addMode}
@@ -97,7 +109,7 @@ export function MapPage({ user }: { user: User | null }) {
         onMapClick={(loc) => setPendingPin(loc)}
       />
 
-      {!!user && customCourts.length > 0 && <MapLegend />}
+      {!!user && <MapLegend />}
 
       {source === 'default' && !addMode && (
         <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 bg-white shadow-md border border-neutral-200 rounded-full px-4 py-1 text-[11px] text-neutral-600">
@@ -117,7 +129,7 @@ export function MapPage({ user }: { user: User | null }) {
         </div>
       )}
 
-      {courts.data && courts.data.courts.length === 0 && !courts.isLoading && !customEmpty && (
+      {!courts.isLoading && !customEmpty && pins.length === 0 && (
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 bg-white shadow-md rounded-full px-4 py-1.5 text-sm text-neutral-600">
           No {sport} courts found here. Try another spot or sport.
         </div>
