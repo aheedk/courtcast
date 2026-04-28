@@ -17,6 +17,8 @@ export const queryKeys = {
     ['courts', round(lat), round(lng), sport, keyword ?? ''] as const,
   court: (placeId: string) => ['court', placeId] as const,
   savedCourts: ['savedCourts'] as const,
+  lists: ['lists'] as const,
+  list: (id: string) => ['lists', id] as const,
 };
 
 function round(n: number) {
