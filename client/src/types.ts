@@ -1,12 +1,25 @@
 export type PlayabilityScore = 'GOOD' | 'OK' | 'BAD';
 
-export type Sport = 'tennis' | 'basketball' | 'pickleball' | 'custom';
-export const SPORTS: readonly Sport[] = ['tennis', 'basketball', 'pickleball', 'custom'] as const;
+export type Sport =
+  | 'tennis' | 'basketball' | 'pickleball'
+  | 'soccer' | 'volleyball' | 'football' | 'baseball' | 'hockey'
+  | 'custom';
+
+export const SPORTS: readonly Sport[] = [
+  'tennis', 'basketball', 'pickleball',
+  'soccer', 'volleyball', 'football', 'baseball', 'hockey',
+  'custom',
+] as const;
 
 export const SPORT_LABEL: Record<Sport, string> = {
   tennis: 'Tennis',
   basketball: 'Basketball',
   pickleball: 'Pickleball',
+  soccer: 'Soccer',
+  volleyball: 'Volleyball',
+  football: 'Football',
+  baseball: 'Baseball',
+  hockey: 'Hockey',
   custom: 'Custom',
 };
 
@@ -14,6 +27,11 @@ export const SPORT_EMOJI: Record<Sport, string> = {
   tennis: '🎾',
   basketball: '🏀',
   pickleball: '🥒',
+  soccer: '⚽',
+  volleyball: '🏐',
+  football: '🏈',
+  baseball: '⚾',
+  hockey: '🏑',
   custom: '📝',
 };
 
