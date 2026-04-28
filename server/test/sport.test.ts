@@ -8,6 +8,12 @@ describe('buildPlacesKeyword', () => {
   it('basketball no keyword → "basketball court"', () => {
     expect(buildPlacesKeyword('basketball')).toBe('basketball court');
   });
+  it('pickleball no keyword → "pickleball court"', () => {
+    expect(buildPlacesKeyword('pickleball')).toBe('pickleball court');
+  });
+  it('pickleball + "indoor" → "pickleball court indoor"', () => {
+    expect(buildPlacesKeyword('pickleball', 'indoor')).toBe('pickleball court indoor');
+  });
   it('tennis + "public" → "tennis court public"', () => {
     expect(buildPlacesKeyword('tennis', 'public')).toBe('tennis court public');
   });
@@ -17,7 +23,7 @@ describe('buildPlacesKeyword', () => {
   it('empty string keyword treated as no keyword', () => {
     expect(buildPlacesKeyword('tennis', '')).toBe('tennis court');
   });
-  it('SPORTS array exposes both', () => {
-    expect(SPORTS).toEqual(['tennis', 'basketball']);
+  it('SPORTS array exposes all three', () => {
+    expect(SPORTS).toEqual(['tennis', 'basketball', 'pickleball']);
   });
 });
