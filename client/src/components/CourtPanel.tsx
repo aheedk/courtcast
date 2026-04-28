@@ -8,6 +8,7 @@ import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
 import { WeatherStats } from './WeatherStats';
 import { RenameInput } from './RenameInput';
+import { AddToListMenu } from './AddToListMenu';
 
 interface Props {
   placeId: string;
@@ -19,6 +20,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   const qc = useQueryClient();
   const [sport] = useSport();
   const [renaming, setRenaming] = useState(false);
+  const [addingToList, setAddingToList] = useState(false);
 
   const detail = useQuery({
     queryKey: queryKeys.court(placeId),
@@ -130,32 +132,54 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
 
             <WeatherStats weather={detail.data.weather} />
 
-            <div className="mt-6">
+            <div className="mt-6 flex flex-col gap-2">
               {!user ? (
                 <p className="text-sm text-neutral-500">
                   <a href="/login" className="text-good underline">Sign in</a> to save this court to your list.
                 </p>
-              ) : isSavedForSport ? (
-                <button
-                  onClick={() => unsave.mutate()}
-                  disabled={unsave.isPending}
-                  className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
-                >
-                  {unsave.isPending ? 'Removing…' : `Remove from ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
-                </button>
               ) : (
-                <button
-                  onClick={() => save.mutate()}
-                  disabled={save.isPending}
-                  className="w-full py-3 rounded-xl bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
-                >
-                  {save.isPending ? 'Saving…' : `Save to ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
-                </button>
+                <>
+                  {isSavedForSport ? (
+                    <button
+                      onClick={() => unsave.mutate()}
+                      disabled={unsave.isPending}
+                      className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
+                    >
+                      {unsave.isPending ? 'Removing…' : `Remove from ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => save.mutate()}
+                      disabled={save.isPending}
+                      className="w-full py-3 rounded-xl bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
+                    >
+                      {save.isPending ? 'Saving…' : `Save to ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setAddingToList(true)}
+                    className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
+                  >
+                    Add to list…
+                  </button>
+                </>
               )}
             </div>
           </>
         )}
       </div>
+
+      {addingToList && (
+        <AddToListMenu
+          onAdd={async (listId) => {
+            if (!isSavedForSport) {
+              await api.saveCourt(placeId, sport);
+            }
+            await api.addToList(listId, placeId, sport);
+          }}
+          onClose={() => setAddingToList(false)}
+        />
+      )}
     </aside>
   );
 }
