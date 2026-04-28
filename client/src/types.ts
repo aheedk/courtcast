@@ -41,6 +41,7 @@ export interface WeatherSummary {
 export interface SavedCourtDetail extends Court {
   savedAt: string;
   sport: Sport;
+  nickname: string | null;
   weather: WeatherSummary | null;
   score: PlayabilityScore | null;
   stale: boolean;
@@ -51,4 +52,20 @@ export interface CourtDetail {
   weather: WeatherSummary;
   score: PlayabilityScore;
   stale: boolean;
+}
+
+export interface ListSummary {
+  id: string;
+  name: string;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListDetail {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  members: SavedCourtDetail[];
 }
