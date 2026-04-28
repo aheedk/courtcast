@@ -28,6 +28,7 @@ router.get('/', async (req, res, next) => {
             ...s.court,
             savedAt: s.createdAt,
             sport: s.sport,
+            nickname: s.nickname,
             weather: w.weather,
             score: score(w.weather),
             stale: w.stale,
@@ -37,6 +38,7 @@ router.get('/', async (req, res, next) => {
             ...s.court,
             savedAt: s.createdAt,
             sport: s.sport,
+            nickname: s.nickname,
             weather: null,
             score: null,
             stale: true,
@@ -122,6 +124,7 @@ router.post('/custom', async (req, res, next) => {
         ...created.court,
         savedAt: created.saved.createdAt,
         sport: created.saved.sport,
+        nickname: null,
         weather,
         score: scoreVal,
         stale,
@@ -132,22 +135,58 @@ router.post('/custom', async (req, res, next) => {
   }
 });
 
-const deleteQuerySchema = z.object({ sport: sportEnum.optional() });
+const sportRequiredQuery = z.object({ sport: sportEnum });
+const sportOptionalQuery = z.object({ sport: sportEnum.optional() });
+
+const patchSchema = z.object({ nickname: z.string().trim().max(80).nullable() });
+
+router.patch('/:placeId', async (req, res, next) => {
+  try {
+    const { sport } = sportRequiredQuery.parse(req.query);
+    const userId = req.user!.id;
+    const { placeId } = req.params;
+    const { nickname } = patchSchema.parse(req.body);
+    const cleaned = nickname && nickname.trim() ? nickname.trim() : null;
+
+    const updated = await prisma.savedCourt
+      .update({
+        where: { userId_placeId_sport: { userId, placeId, sport } },
+        data: { nickname: cleaned },
+      })
+      .catch(() => null);
+
+    if (!updated) {
+      return res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'Saved court not found' },
+      });
+    }
+    res.json({ savedCourt: { placeId, sport, nickname: updated.nickname } });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.delete('/:placeId', async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { placeId } = req.params;
-    const { sport } = deleteQuerySchema.parse(req.query);
+    const { sport } = sportOptionalQuery.parse(req.query);
 
-    const where = sport
-      ? { userId, placeId, sport }
-      : { userId, placeId };
+    const where = sport ? { userId, placeId, sport } : { userId, placeId };
 
     await prisma.savedCourt.deleteMany({ where });
 
-    // If the court is a user-owned custom one and now has no remaining
-    // saves at all, drop the Court row too (no other consumers).
+    // Also clean up any list memberships pointing at this saved entry,
+    // for any list this user owns.
+    await prisma.listMember.deleteMany({
+      where: {
+        list: { userId },
+        placeId,
+        ...(sport ? { sport } : {}),
+      },
+    });
+
+    // If the court is a user-owned custom one with no remaining saves, drop it.
     const court = await prisma.court.findUnique({ where: { placeId } });
     if (court?.isCustom && court.addedByUserId === userId) {
       const remaining = await prisma.savedCourt.count({ where: { placeId } });
