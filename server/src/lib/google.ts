@@ -86,13 +86,7 @@ export async function fetchNearbyCourts(
     url.searchParams.set('keyword', keyword);
     url.searchParams.set('key', env.googlePlacesKey);
 
-    // The Maps/Places API key is restricted to HTTP referrers
-    // (CLIENT_ORIGIN). Server-side fetches from Railway have no Referer by
-    // default, so Google rejects them with REQUEST_DENIED. We forge a
-    // matching Referer here so a single key works for browser and server.
-    const res = await fetch(url.toString(), {
-      headers: { Referer: env.clientOrigin },
-    });
+    const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`Places HTTP ${res.status}`);
     const data = (await res.json()) as PlacesNearbyResponse;
 

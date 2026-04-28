@@ -1,4 +1,4 @@
-# CourtCast — Setup
+# CourtClimate — Setup
 
 This walks you click-by-click from a fresh clone to a running app.
 
@@ -37,12 +37,12 @@ OpenWeatherMap.
 1. Same project. Left nav → **APIs & Services → OAuth consent screen**.
 2. User type → **External** → Create.
 3. Fill in:
-   - App name: `CourtCast`
+   - App name: `CourtClimate`
    - User support email: your email
    - Developer contact: your email
    - Save and continue through Scopes and Test users (you can skip details).
 4. Back to **APIs & Services → Credentials → + Create Credentials → OAuth client ID**.
-5. Application type → **Web application**. Name → `CourtCast Local`.
+5. Application type → **Web application**. Name → `CourtClimate Local`.
 6. **Authorized JavaScript origins** → add `http://localhost:5173`.
 7. **Authorized redirect URIs** can be left empty (we use Google Identity
    Services, not the redirect-based flow).
@@ -101,7 +101,7 @@ Two terminals:
 ```bash
 # Terminal 1 — API
 npm run dev --prefix server
-# → [courtcast] api listening on http://localhost:4000
+# → [courtclimate] api listening on http://localhost:4000
 ```
 
 ```bash

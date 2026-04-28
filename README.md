@@ -1,4 +1,4 @@
-# CourtCast
+# CourtClimate
 
 Tennis court weather + playability web app. Sign in with Google, see nearby
 courts on a map, save your regulars, and at any moment know whether

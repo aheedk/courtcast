@@ -62,7 +62,7 @@ export function LoginPage({ user }: { user: User | null }) {
     <div className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-white border border-neutral-200 rounded-2xl p-8 text-center shadow-sm">
         <div className="w-12 h-12 rounded-xl bg-good mx-auto mb-4" aria-hidden />
-        <h1 className="text-xl font-bold mb-1">Welcome to CourtCast</h1>
+        <h1 className="text-xl font-bold mb-1">Welcome to CourtClimate</h1>
         <p className="text-sm text-neutral-500 mb-6">
           Sign in to save your favorite tennis courts and see live playability for each one.
         </p>

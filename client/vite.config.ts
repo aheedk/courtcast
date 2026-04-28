@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'CourtCast',
-        short_name: 'CourtCast',
+        name: 'CourtClimate',
+        short_name: 'CourtClimate',
         description: 'Tennis court weather + playability. See which courts are GOOD to play right now.',
         theme_color: '#16a34a',
         background_color: '#fafaf9',

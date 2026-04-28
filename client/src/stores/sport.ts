@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { Sport } from '../types';
 import { SPORTS } from '../types';
 
-const KEY = 'courtcast.sport';
+const KEY = 'courtclimate.sport';
 
 function read(): Sport {
   if (typeof window === 'undefined') return 'tennis';

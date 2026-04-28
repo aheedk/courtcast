@@ -22,7 +22,7 @@ export function TopBar({ user }: { user: User | null }) {
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-bold text-lg">
           <span className="inline-block w-6 h-6 rounded-md bg-good" aria-hidden />
-          CourtCast
+          CourtClimate
         </Link>
         <nav className="flex items-center gap-1">
           <NavLink to="/" end className={({ isActive }) => `${navLink} ${isActive ? navLinkActive : ''}`}>

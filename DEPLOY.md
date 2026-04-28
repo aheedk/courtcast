@@ -1,4 +1,4 @@
-# Deploying CourtCast
+# Deploying CourtClimate
 
 The MVP deploys as two pieces:
 
@@ -46,7 +46,7 @@ On the **server** service → **Variables**, add:
 | Key | Value |
 |---|---|
 | `NODE_ENV` | `production` |
-| `CLIENT_ORIGIN` | (fill after Netlify deploy — e.g. `https://courtcast.netlify.app`) |
+| `CLIENT_ORIGIN` | (fill after Netlify deploy — e.g. `https://courtclimate.netlify.app`) |
 | `SESSION_SECRET` | a long random string (`openssl rand -hex 32`) |
 | `GOOGLE_OAUTH_CLIENT_ID` | same as your `SETUP.md` value |
 | `GOOGLE_PLACES_KEY` | same as your `SETUP.md` value |
@@ -105,12 +105,12 @@ push.
 **Deploys → Trigger deploy → Deploy site**. Wait ~1 minute. You'll get
 a URL like `https://wonderful-name-12345.netlify.app`. Optionally rename
 it under **Site settings → Site information → Change site name** to
-something like `courtcast`.
+something like `courtclimate`.
 
 ### 2d. Wire it back to Railway
 
 Go back to Railway → server service → Variables → set
-`CLIENT_ORIGIN` to your Netlify URL (e.g. `https://courtcast.netlify.app`).
+`CLIENT_ORIGIN` to your Netlify URL (e.g. `https://courtclimate.netlify.app`).
 Redeploy the Railway service so the change takes effect.
 
 ---

@@ -5,5 +5,5 @@ const app = createApp();
 
 app.listen(env.port, () => {
   // eslint-disable-next-line no-console
-  console.log(`[courtcast] api listening on http://localhost:${env.port}`);
+  console.log(`[courtclimate] api listening on http://localhost:${env.port}`);
 });
