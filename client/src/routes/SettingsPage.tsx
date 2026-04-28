@@ -2,14 +2,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useThresholds } from '../stores/thresholds';
 import { useSport } from '../stores/sport';
+import { useEnabledSports, toggleSport } from '../stores/enabledSports';
 import { SportChips } from '../components/SportChips';
 import { PlayabilityBadge } from '../components/PlayabilityBadge';
 import { scoreFromThresholds } from '../lib/playability';
+import { SPORTS, SPORT_EMOJI, SPORT_LABEL } from '../types';
 import type { User } from '../types';
 
 export function SettingsPage({ user }: { user: User }) {
   const [thresholds, setThresholds, resetThresholds] = useThresholds();
   const [sport, setSport] = useSport();
+  const [enabledSports, setEnabledSports] = useEnabledSports();
   const qc = useQueryClient();
 
   const logout = useMutation({
@@ -101,12 +104,48 @@ export function SettingsPage({ user }: { user: User }) {
 
       <section className="bg-white border border-neutral-200 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-1">
+          Sports
+        </h2>
+        <p className="text-sm text-neutral-500 mb-4">
+          Pick which sports show as tabs and chips.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SPORTS.map((s) => {
+            const isEnabled = enabledSports.includes(s);
+            const isLast = isEnabled && enabledSports.length === 1;
+            return (
+              <button
+                key={s}
+                onClick={() => {
+                  if (isLast) return;
+                  setEnabledSports(toggleSport(s, enabledSports));
+                }}
+                disabled={isLast}
+                aria-pressed={isEnabled}
+                className={
+                  isEnabled
+                    ? 'bg-good text-white px-3 py-1.5 rounded-full text-sm font-semibold disabled:opacity-80'
+                    : 'bg-white text-neutral-700 border border-neutral-300 px-3 py-1.5 rounded-full text-sm font-semibold hover:bg-neutral-50'
+                }
+              >
+                {SPORT_EMOJI[s]} {SPORT_LABEL[s]}
+              </button>
+            );
+          })}
+        </div>
+        {enabledSports.length === 1 && (
+          <p className="text-xs text-neutral-500 mt-3">At least one sport must stay enabled.</p>
+        )}
+      </section>
+
+      <section className="bg-white border border-neutral-200 rounded-2xl p-5">
+        <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-1">
           Default sport
         </h2>
         <p className="text-sm text-neutral-500 mb-4">
           The sport chip selected when you open the map.
         </p>
-        <SportChips value={sport} onChange={setSport} />
+        <SportChips value={sport} onChange={setSport} sports={enabledSports} />
       </section>
 
       <button
