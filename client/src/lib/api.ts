@@ -1,4 +1,4 @@
-import type { Court, CourtDetail, SavedCourtDetail, User, WeatherSummary, PlayabilityScore, Sport } from '../types';
+import type { Court, CourtDetail, SavedCourtDetail, User, WeatherSummary, PlayabilityScore, Sport, ListSummary, ListDetail } from '../types';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(path, {
@@ -61,4 +61,31 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+
+  renameSavedCourt: (placeId: string, sport: Sport, nickname: string | null) =>
+    request<{ savedCourt: { placeId: string; sport: Sport; nickname: string | null } }>(
+      `/api/me/courts/${placeId}?sport=${sport}`,
+      { method: 'PATCH', body: JSON.stringify({ nickname }) },
+    ),
+
+  lists: () => request<{ lists: ListSummary[] }>('/api/me/lists'),
+  createList: (name: string) =>
+    request<{ list: ListSummary }>('/api/me/lists', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+  list: (id: string) => request<{ list: ListDetail }>(`/api/me/lists/${id}`),
+  renameList: (id: string, name: string) =>
+    request<{ list: { id: string; name: string } }>(`/api/me/lists/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    }),
+  deleteList: (id: string) => request<void>(`/api/me/lists/${id}`, { method: 'DELETE' }),
+  addToList: (listId: string, placeId: string, sport: Sport) =>
+    request<{ member: { listId: string; placeId: string; sport: Sport } }>(
+      `/api/me/lists/${listId}/members`,
+      { method: 'POST', body: JSON.stringify({ placeId, sport }) },
+    ),
+  removeFromList: (listId: string, placeId: string, sport: Sport) =>
+    request<void>(`/api/me/lists/${listId}/members/${placeId}/${sport}`, { method: 'DELETE' }),
 };
