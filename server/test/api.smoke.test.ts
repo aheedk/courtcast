@@ -68,7 +68,7 @@ describe('api smoke', () => {
   });
 
   it('GET /api/courts with bad sport → 400', async () => {
-    const res = await request(app).get('/api/courts?lat=40&lng=-74&sport=hockey');
+    const res = await request(app).get('/api/courts?lat=40&lng=-74&sport=cricket');
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('BAD_REQUEST');
   });

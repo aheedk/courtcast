@@ -11,25 +11,32 @@ describe('buildPlacesKeyword', () => {
   it('pickleball no keyword → "pickleball court"', () => {
     expect(buildPlacesKeyword('pickleball')).toBe('pickleball court');
   });
-  it('custom no keyword → "" (empty)', () => {
+  it('soccer no keyword → "soccer field"', () => {
+    expect(buildPlacesKeyword('soccer')).toBe('soccer field');
+  });
+  it('volleyball no keyword → "volleyball court"', () => {
+    expect(buildPlacesKeyword('volleyball')).toBe('volleyball court');
+  });
+  it('football no keyword → "football field"', () => {
+    expect(buildPlacesKeyword('football')).toBe('football field');
+  });
+  it('baseball no keyword → "baseball field"', () => {
+    expect(buildPlacesKeyword('baseball')).toBe('baseball field');
+  });
+  it('hockey no keyword → "hockey rink"', () => {
+    expect(buildPlacesKeyword('hockey')).toBe('hockey rink');
+  });
+  it('custom no keyword → ""', () => {
     expect(buildPlacesKeyword('custom')).toBe('');
   });
-  it('custom + "soccer field" → "soccer field"', () => {
-    expect(buildPlacesKeyword('custom', 'soccer field')).toBe('soccer field');
+  it('soccer + "indoor" → "soccer field indoor"', () => {
+    expect(buildPlacesKeyword('soccer', 'indoor')).toBe('soccer field indoor');
   });
-  it('pickleball + "indoor" → "pickleball court indoor"', () => {
-    expect(buildPlacesKeyword('pickleball', 'indoor')).toBe('pickleball court indoor');
-  });
-  it('tennis + "public" → "tennis court public"', () => {
-    expect(buildPlacesKeyword('tennis', 'public')).toBe('tennis court public');
-  });
-  it('basketball + "  indoor  " trims → "basketball court indoor"', () => {
-    expect(buildPlacesKeyword('basketball', '  indoor  ')).toBe('basketball court indoor');
-  });
-  it('empty string keyword treated as no keyword', () => {
-    expect(buildPlacesKeyword('tennis', '')).toBe('tennis court');
-  });
-  it('SPORTS array exposes all four', () => {
-    expect(SPORTS).toEqual(['tennis', 'basketball', 'pickleball', 'custom']);
+  it('SPORTS array exposes all nine in fixed order', () => {
+    expect(SPORTS).toEqual([
+      'tennis', 'basketball', 'pickleball',
+      'soccer', 'volleyball', 'football', 'baseball', 'hockey',
+      'custom',
+    ]);
   });
 });

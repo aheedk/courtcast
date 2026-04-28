@@ -1,10 +1,23 @@
-export type Sport = 'tennis' | 'basketball' | 'pickleball' | 'custom';
-export const SPORTS: readonly Sport[] = ['tennis', 'basketball', 'pickleball', 'custom'] as const;
+export type Sport =
+  | 'tennis' | 'basketball' | 'pickleball'
+  | 'soccer' | 'volleyball' | 'football' | 'baseball' | 'hockey'
+  | 'custom';
+
+export const SPORTS: readonly Sport[] = [
+  'tennis', 'basketball', 'pickleball',
+  'soccer', 'volleyball', 'football', 'baseball', 'hockey',
+  'custom',
+] as const;
 
 const SPORT_KEYWORD: Record<Sport, string> = {
   tennis: 'tennis court',
   basketball: 'basketball court',
   pickleball: 'pickleball court',
+  soccer: 'soccer field',
+  volleyball: 'volleyball court',
+  football: 'football field',
+  baseball: 'baseball field',
+  hockey: 'hockey rink',
   custom: '',
 };
 
