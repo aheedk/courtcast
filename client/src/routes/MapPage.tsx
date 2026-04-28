@@ -5,6 +5,8 @@ import { queryKeys } from '../lib/queryClient';
 import { useUi } from '../stores/ui';
 import { useSport } from '../stores/sport';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { useThresholds } from '../stores/thresholds';
+import { scoreFromThresholds } from '../lib/playability';
 import { MapView, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
 import { SearchBar } from '../components/SearchBar';
@@ -18,6 +20,7 @@ export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
   const { selectedPlaceId, selectCourt } = useUi();
   const [sport, setSport] = useSport();
+  const [thresholds] = useThresholds();
 
   const [center, setCenter] = useState(geoPosition);
   useEffect(() => {
@@ -55,12 +58,15 @@ export function MapPage({ user }: { user: User | null }) {
   const pins: PinForMap[] = [
     ...placesPins.map((c) => {
       const s = savedById.get(c.placeId);
+      const w = s?.weather ?? c.weather ?? null;
       return {
         placeId: c.placeId,
         name: c.name,
         lat: c.lat,
         lng: c.lng,
-        score: s?.score ?? c.score ?? null,
+        score: w
+          ? scoreFromThresholds(w, thresholds)
+          : (s?.score ?? c.score ?? null),
         isSavedForSport: !!s,
       };
     }),
@@ -71,7 +77,9 @@ export function MapPage({ user }: { user: User | null }) {
         name: s.name,
         lat: s.lat,
         lng: s.lng,
-        score: s.score,
+        score: s.weather
+          ? scoreFromThresholds(s.weather, thresholds)
+          : (s.score ?? null),
         isSavedForSport: true,
       })),
   ];
