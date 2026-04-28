@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
-import type { Sport } from '../types';
 
 interface Props {
-  placeId: string;
-  sport: Sport;
+  // Caller decides what "add to list" means — this lets a pure picker
+  // also support save-first flows (CourtPanel) without baking save
+  // semantics into the modal itself.
+  onAdd: (listId: string) => Promise<void>;
   onClose: () => void;
 }
 
-export function AddToListMenu({ placeId, sport, onClose }: Props) {
+export function AddToListMenu({ onAdd, onClose }: Props) {
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
@@ -18,9 +19,12 @@ export function AddToListMenu({ placeId, sport, onClose }: Props) {
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
 
   const add = useMutation({
-    mutationFn: (listId: string) => api.addToList(listId, placeId, sport),
+    mutationFn: async (listId: string) => {
+      await onAdd(listId);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.lists });
+      qc.invalidateQueries({ queryKey: queryKeys.savedCourts });
       onClose();
     },
   });
@@ -74,6 +78,10 @@ export function AddToListMenu({ placeId, sport, onClose }: Props) {
             </button>
           ))}
         </div>
+
+        {add.isError && (
+          <p className="text-xs text-bad mt-2 px-1">Couldn't add. Try again.</p>
+        )}
 
         <div className="mt-3 pt-3 border-t border-neutral-100">
           {creating ? (
