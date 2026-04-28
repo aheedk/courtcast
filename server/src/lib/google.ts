@@ -4,7 +4,7 @@ import { getCached, putCached, geohashFor, TTL, PRECISION } from './cache';
 import { prisma } from './prisma';
 import { buildPlacesKeyword, type Sport } from './sport';
 import { fetchWeather } from './openweather';
-import { score, type PlayabilityScore } from './playability';
+import { score, type PlayabilityScore, type WeatherSummary } from './playability';
 
 const oauthClient = new OAuth2Client(env.googleOauthClientId);
 
@@ -48,6 +48,7 @@ export interface CourtSummary {
 export interface HydratedCourt extends CourtSummary {
   score: PlayabilityScore | null;
   stale: boolean;
+  weather: WeatherSummary | null;
 }
 
 interface PlacesNearbyResponse {
@@ -156,9 +157,9 @@ async function hydrateCourts(courts: CourtSummary[]): Promise<HydratedCourt[]> {
     courts.map(async (c) => {
       try {
         const w = await fetchWeather(c.lat, c.lng);
-        return { ...c, score: score(w.weather), stale: w.stale };
+        return { ...c, score: score(w.weather), stale: w.stale, weather: w.weather };
       } catch {
-        return { ...c, score: null, stale: true };
+        return { ...c, score: null, stale: true, weather: null };
       }
     }),
   );
