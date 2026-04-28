@@ -45,16 +45,18 @@ export const api = {
 
   savedCourts: () => request<{ courts: SavedCourtDetail[] }>('/api/me/courts'),
 
-  saveCourt: (placeId: string) =>
-    request<{ savedCourt: { placeId: string; savedAt: string } }>('/api/me/courts', {
+  saveCourt: (placeId: string, sport: Sport) =>
+    request<{ savedCourt: { placeId: string; sport: Sport; savedAt: string } }>('/api/me/courts', {
       method: 'POST',
-      body: JSON.stringify({ placeId }),
+      body: JSON.stringify({ placeId, sport }),
     }),
 
-  unsaveCourt: (placeId: string) =>
-    request<void>(`/api/me/courts/${placeId}`, { method: 'DELETE' }),
+  unsaveCourt: (placeId: string, sport?: Sport) => {
+    const qs = sport ? `?sport=${sport}` : '';
+    return request<void>(`/api/me/courts/${placeId}${qs}`, { method: 'DELETE' });
+  },
 
-  saveCustomCourt: (input: { lat: number; lng: number; name: string }) =>
+  saveCustomCourt: (input: { lat: number; lng: number; name: string; sport: Sport }) =>
     request<{ court: SavedCourtDetail }>('/api/me/courts/custom', {
       method: 'POST',
       body: JSON.stringify(input),
