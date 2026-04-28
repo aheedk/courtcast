@@ -6,6 +6,7 @@ import { useUi } from '../stores/ui';
 import { useSport } from '../stores/sport';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useThresholds } from '../stores/thresholds';
+import { useEnabledSports } from '../stores/enabledSports';
 import { scoreFromThresholds } from '../lib/playability';
 import { MapView, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
@@ -21,6 +22,7 @@ export function MapPage({ user }: { user: User | null }) {
   const { selectedPlaceId, selectCourt } = useUi();
   const [sport, setSport] = useSport();
   const [thresholds] = useThresholds();
+  const [enabledSports] = useEnabledSports();
 
   const [center, setCenter] = useState(geoPosition);
   useEffect(() => {
@@ -97,7 +99,7 @@ export function MapPage({ user }: { user: User | null }) {
           />
         </div>
         <div className="pointer-events-auto">
-          <SportChips value={sport} onChange={setSport} />
+          <SportChips value={sport} onChange={setSport} sports={enabledSports} />
         </div>
       </div>
 
