@@ -78,4 +78,45 @@ describe('api smoke', () => {
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('NOT_FOUND');
   });
+
+  it('PATCH /api/me/courts/:placeId?sport=tennis → 401 without session', async () => {
+    const res = await request(app)
+      .patch('/api/me/courts/somePlaceId?sport=tennis')
+      .send({ nickname: 'Spot' });
+    expect(res.status).toBe(401);
+  });
+
+  it('PATCH /api/me/courts/:placeId without sport → 401 (auth checked first)', async () => {
+    const res = await request(app)
+      .patch('/api/me/courts/somePlaceId')
+      .send({ nickname: 'Spot' });
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/me/lists → 401 without session', async () => {
+    const res = await request(app).get('/api/me/lists');
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /api/me/lists → 401 without session', async () => {
+    const res = await request(app).post('/api/me/lists').send({ name: 'Sunday' });
+    expect(res.status).toBe(401);
+  });
+
+  it('DELETE /api/me/lists/:id → 401 without session', async () => {
+    const res = await request(app).delete('/api/me/lists/abc');
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /api/me/lists/:id/members → 401 without session', async () => {
+    const res = await request(app)
+      .post('/api/me/lists/abc/members')
+      .send({ placeId: 'p', sport: 'tennis' });
+    expect(res.status).toBe(401);
+  });
+
+  it('DELETE /api/me/lists/:id/members/:placeId/:sport → 401 without session', async () => {
+    const res = await request(app).delete('/api/me/lists/abc/members/p/tennis');
+    expect(res.status).toBe(401);
+  });
 });
