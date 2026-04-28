@@ -106,9 +106,9 @@ export function MapView({
       {pins.map((p) => {
         const isSelected = p.placeId === selectedPlaceId;
         // Stars need more bounding-box than circles to read at the same
-        // weight — the points are mostly negative space. Bumped to 13
-        // (vs circle's 7) so saved courts are unmistakably distinct.
-        const baseScale = p.isSavedForSport ? 13 : 7;
+        // weight — the points are mostly negative space. Scale 11 vs
+        // circle's 7 keeps stars distinct without overpowering the map.
+        const baseScale = p.isSavedForSport ? 11 : 7;
         const scale = isSelected ? baseScale * 1.3 : baseScale;
         // Stars get a dark outline (white blends with pale map backgrounds);
         // circles keep their white outline (their solid fill carries them).
