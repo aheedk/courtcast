@@ -7,6 +7,7 @@ import { AuthGate } from './components/AuthGate';
 import { MapPage } from './routes/MapPage';
 import { MyCourtsPage } from './routes/MyCourtsPage';
 import { LoginPage } from './routes/LoginPage';
+import { SettingsPage } from './routes/SettingsPage';
 
 export function App() {
   const me = useQuery({
@@ -35,6 +36,14 @@ export function App() {
           element={
             <AuthGate user={user}>
               <MyCourtsPage user={user!} />
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <AuthGate user={user}>
+              <SettingsPage user={user!} />
             </AuthGate>
           }
         />
