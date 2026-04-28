@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { useSport } from '../stores/sport';
+import { useScoreFor } from '../stores/thresholds';
 import type { User } from '../types';
 import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
@@ -38,6 +39,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   );
   const isSavedForSport = !!savedEntry;
   const displayName = savedEntry?.nickname || detail.data?.court.name;
+  const userScore = useScoreFor(detail.data?.weather, detail.data?.score ?? null);
 
   const save = useMutation({
     mutationFn: () => api.saveCourt(placeId, sport),
@@ -124,7 +126,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
         {detail.data && (
           <>
             <div className="mt-5">
-              <PlayabilityBadge score={detail.data.score} size="lg" />
+              {userScore && <PlayabilityBadge score={userScore} size="lg" />}
               {detail.data.stale && (
                 <p className="mt-2 text-xs text-neutral-500">Showing last cached weather.</p>
               )}
