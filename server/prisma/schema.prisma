@@ -17,6 +17,7 @@ model User {
   savedCourts  SavedCourt[]
   sessions     Session[]
   customCourts Court[]      @relation("UserCustomCourts")
+  lists        List[]
 }
 
 model Session {
@@ -48,6 +49,7 @@ model SavedCourt {
   userId    String
   placeId   String
   sport     String   @default("tennis")
+  nickname  String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   court     Court    @relation(fields: [placeId], references: [placeId])
   createdAt DateTime @default(now())
@@ -55,6 +57,29 @@ model SavedCourt {
   @@id([userId, placeId, sport])
   @@index([userId])
   @@index([userId, sport])
+}
+
+model List {
+  id        String       @id @default(cuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  members   ListMember[]
+
+  @@index([userId])
+}
+
+model ListMember {
+  listId    String
+  placeId   String
+  sport     String
+  list      List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([listId, placeId, sport])
+  @@index([listId])
 }
 
 model WeatherCache {
