@@ -3,6 +3,8 @@ import { env } from './env';
 import { getCached, putCached, geohashFor, TTL, PRECISION } from './cache';
 import { prisma } from './prisma';
 import { buildPlacesKeyword, type Sport } from './sport';
+import { fetchWeather } from './openweather';
+import { score, type PlayabilityScore } from './playability';
 
 const oauthClient = new OAuth2Client(env.googleOauthClientId);
 
@@ -43,6 +45,11 @@ export interface CourtSummary {
   address: string | null;
 }
 
+export interface HydratedCourt extends CourtSummary {
+  score: PlayabilityScore | null;
+  stale: boolean;
+}
+
 interface PlacesNearbyResponse {
   status: string;
   error_message?: string;
@@ -57,7 +64,10 @@ interface PlacesNearbyResponse {
 /**
  * Fetches nearby tennis courts from Google Places Nearby Search.
  * Cached server-side by geohash (precision 4, ~20km cell) for 7 days.
- * On upstream failure, returns a stale cached row if available.
+ * Each returned court is hydrated with score + stale via fetchWeather
+ * (geohash-5-cached, so most calls in a small radius hit the cache).
+ * On upstream Places failure, returns the stale cached metadata if
+ * available (still hydrated with current weather).
  */
 export async function fetchNearbyCourts(
   lat: number,
@@ -65,7 +75,7 @@ export async function fetchNearbyCourts(
   radiusMeters: number,
   sport: Sport = 'tennis',
   userKeyword?: string,
-): Promise<{ courts: CourtSummary[]; stale: boolean }> {
+): Promise<{ courts: HydratedCourt[]; stale: boolean }> {
   const keyword = buildPlacesKeyword(sport, userKeyword);
   const hasUserKeyword = !!(userKeyword && userKeyword.trim());
 
@@ -82,7 +92,8 @@ export async function fetchNearbyCourts(
     ? null
     : await getCached<CourtSummary[]>('placesCache', cacheKey, TTL.placesMs);
   if (cached && !cached.stale) {
-    return { courts: cached.payload, stale: false };
+    const hydrated = await hydrateCourts(cached.payload);
+    return { courts: hydrated, stale: false };
   }
 
   try {
@@ -129,9 +140,26 @@ export async function fetchNearbyCourts(
       ),
     );
 
-    return { courts, stale: false };
+    const hydrated = await hydrateCourts(courts);
+    return { courts: hydrated, stale: false };
   } catch (err) {
-    if (cached) return { courts: cached.payload, stale: true };
+    if (cached) {
+      const hydrated = await hydrateCourts(cached.payload);
+      return { courts: hydrated, stale: true };
+    }
     throw err;
   }
+}
+
+async function hydrateCourts(courts: CourtSummary[]): Promise<HydratedCourt[]> {
+  return Promise.all(
+    courts.map(async (c) => {
+      try {
+        const w = await fetchWeather(c.lat, c.lng);
+        return { ...c, score: score(w.weather), stale: w.stale };
+      } catch {
+        return { ...c, score: null, stale: true };
+      }
+    }),
+  );
 }
