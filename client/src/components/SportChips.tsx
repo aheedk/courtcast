@@ -4,12 +4,13 @@ import { SPORTS, SPORT_LABEL, SPORT_EMOJI } from '../types';
 interface Props {
   value: Sport;
   onChange: (s: Sport) => void;
+  sports?: readonly Sport[];
 }
 
-export function SportChips({ value, onChange }: Props) {
+export function SportChips({ value, onChange, sports = SPORTS }: Props) {
   return (
-    <div className="flex gap-2 justify-center">
-      {SPORTS.map((s) => {
+    <div className="flex gap-2 justify-center flex-wrap">
+      {sports.map((s) => {
         const active = s === value;
         return (
           <button
