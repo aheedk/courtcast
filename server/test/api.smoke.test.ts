@@ -45,12 +45,19 @@ describe('api smoke', () => {
   it('POST /api/me/courts/custom → 401 without session', async () => {
     const res = await request(app)
       .post('/api/me/courts/custom')
-      .send({ lat: 40, lng: -74, name: 'Backyard' });
+      .send({ lat: 40, lng: -74, name: 'Backyard', sport: 'tennis' });
     expect(res.status).toBe(401);
   });
 
-  it('DELETE /api/me/courts/:placeId → 401 without session', async () => {
-    const res = await request(app).delete('/api/me/courts/somePlaceId');
+  it('POST /api/me/courts → 401 without session (with sport in body)', async () => {
+    const res = await request(app)
+      .post('/api/me/courts')
+      .send({ placeId: 'someId', sport: 'pickleball' });
+    expect(res.status).toBe(401);
+  });
+
+  it('DELETE /api/me/courts/:placeId?sport=tennis → 401 without session', async () => {
+    const res = await request(app).delete('/api/me/courts/someId?sport=tennis');
     expect(res.status).toBe(401);
   });
 

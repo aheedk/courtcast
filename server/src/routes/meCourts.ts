@@ -4,10 +4,13 @@ import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
 import { fetchWeather } from '../lib/openweather';
 import { score } from '../lib/playability';
+import { SPORTS } from '../lib/sport';
 
 const router = Router();
 
 router.use(requireAuth);
+
+const sportEnum = z.enum(SPORTS as unknown as [string, ...string[]]);
 
 router.get('/', async (req, res, next) => {
   try {
@@ -24,6 +27,7 @@ router.get('/', async (req, res, next) => {
           return {
             ...s.court,
             savedAt: s.createdAt,
+            sport: s.sport,
             weather: w.weather,
             score: score(w.weather),
             stale: w.stale,
@@ -32,6 +36,7 @@ router.get('/', async (req, res, next) => {
           return {
             ...s.court,
             savedAt: s.createdAt,
+            sport: s.sport,
             weather: null,
             score: null,
             stale: true,
@@ -46,11 +51,14 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-const addSchema = z.object({ placeId: z.string().min(1) });
+const addSchema = z.object({
+  placeId: z.string().min(1),
+  sport: sportEnum,
+});
 
 router.post('/', async (req, res, next) => {
   try {
-    const { placeId } = addSchema.parse(req.body);
+    const { placeId, sport } = addSchema.parse(req.body);
 
     const court = await prisma.court.findUnique({ where: { placeId } });
     if (!court) {
@@ -60,12 +68,14 @@ router.post('/', async (req, res, next) => {
     }
 
     const saved = await prisma.savedCourt.upsert({
-      where: { userId_placeId: { userId: req.user!.id, placeId } },
-      create: { userId: req.user!.id, placeId },
+      where: { userId_placeId_sport: { userId: req.user!.id, placeId, sport } },
+      create: { userId: req.user!.id, placeId, sport },
       update: {},
     });
 
-    res.status(201).json({ savedCourt: { placeId: saved.placeId, savedAt: saved.createdAt } });
+    res.status(201).json({
+      savedCourt: { placeId: saved.placeId, sport: saved.sport, savedAt: saved.createdAt },
+    });
   } catch (err) {
     next(err);
   }
@@ -75,14 +85,14 @@ const customSchema = z.object({
   lat: z.coerce.number().gte(-90).lte(90),
   lng: z.coerce.number().gte(-180).lte(180),
   name: z.string().trim().min(1).max(80),
+  sport: sportEnum,
 });
 
 router.post('/custom', async (req, res, next) => {
   try {
-    const { lat, lng, name } = customSchema.parse(req.body);
+    const { lat, lng, name, sport } = customSchema.parse(req.body);
     const userId = req.user!.id;
 
-    // Synthetic placeId for custom courts.
     const placeId = `custom:${userId}:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const created = await prisma.$transaction(async (tx) => {
@@ -90,7 +100,7 @@ router.post('/custom', async (req, res, next) => {
         data: { placeId, name, lat, lng, isCustom: true, addedByUserId: userId },
       });
       const saved = await tx.savedCourt.create({
-        data: { userId, placeId: court.placeId },
+        data: { userId, placeId: court.placeId, sport },
       });
       return { court, saved };
     });
@@ -108,25 +118,42 @@ router.post('/custom', async (req, res, next) => {
     }
 
     res.status(201).json({
-      court: { ...created.court, savedAt: created.saved.createdAt, weather, score: scoreVal, stale },
+      court: {
+        ...created.court,
+        savedAt: created.saved.createdAt,
+        sport: created.saved.sport,
+        weather,
+        score: scoreVal,
+        stale,
+      },
     });
   } catch (err) {
     next(err);
   }
 });
 
+const deleteQuerySchema = z.object({ sport: sportEnum.optional() });
+
 router.delete('/:placeId', async (req, res, next) => {
   try {
     const userId = req.user!.id;
     const { placeId } = req.params;
+    const { sport } = deleteQuerySchema.parse(req.query);
 
-    await prisma.savedCourt.deleteMany({ where: { userId, placeId } });
+    const where = sport
+      ? { userId, placeId, sport }
+      : { userId, placeId };
 
-    // If the court is a user-owned custom one, it has no other consumers —
-    // delete the Court row too.
+    await prisma.savedCourt.deleteMany({ where });
+
+    // If the court is a user-owned custom one and now has no remaining
+    // saves at all, drop the Court row too (no other consumers).
     const court = await prisma.court.findUnique({ where: { placeId } });
     if (court?.isCustom && court.addedByUserId === userId) {
-      await prisma.court.delete({ where: { placeId } });
+      const remaining = await prisma.savedCourt.count({ where: { placeId } });
+      if (remaining === 0) {
+        await prisma.court.delete({ where: { placeId } });
+      }
     }
 
     res.status(204).end();
