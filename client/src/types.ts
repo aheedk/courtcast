@@ -34,6 +34,7 @@ export interface Court {
   addedByUserId?: string | null;
   score?: PlayabilityScore | null;
   stale?: boolean;
+  weather?: WeatherSummary | null;
 }
 
 export interface WeatherSummary {
