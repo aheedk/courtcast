@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
@@ -6,6 +7,7 @@ import type { User } from '../types';
 import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
 import { WeatherStats } from './WeatherStats';
+import { RenameInput } from './RenameInput';
 
 interface Props {
   placeId: string;
@@ -16,6 +18,7 @@ interface Props {
 export function CourtPanel({ placeId, user, onClose }: Props) {
   const qc = useQueryClient();
   const [sport] = useSport();
+  const [renaming, setRenaming] = useState(false);
 
   const detail = useQuery({
     queryKey: queryKeys.court(placeId),
@@ -28,8 +31,11 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
     enabled: !!user,
   });
 
-  const isSavedForSport =
-    saved.data?.courts.some((c) => c.placeId === placeId && c.sport === sport) ?? false;
+  const savedEntry = saved.data?.courts.find(
+    (c) => c.placeId === placeId && c.sport === sport,
+  );
+  const isSavedForSport = !!savedEntry;
+  const displayName = savedEntry?.nickname || detail.data?.court.name;
 
   const save = useMutation({
     mutationFn: () => api.saveCourt(placeId, sport),
@@ -37,7 +43,18 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   });
   const unsave = useMutation({
     mutationFn: () => api.unsaveCourt(placeId, sport),
-    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.savedCourts }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.savedCourts });
+      qc.invalidateQueries({ queryKey: ['lists'] });
+    },
+  });
+  const rename = useMutation({
+    mutationFn: (nickname: string | null) => api.renameSavedCourt(placeId, sport, nickname),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.savedCourts });
+      qc.invalidateQueries({ queryKey: ['lists'] });
+      setRenaming(false);
+    },
   });
 
   return (
@@ -51,21 +68,46 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
     >
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold leading-tight">
-              {detail.data?.court.name ?? (detail.isLoading ? 'Loading…' : 'Court')}
-            </h2>
+          <div className="min-w-0 flex-1">
+            {renaming && savedEntry ? (
+              <RenameInput
+                initialValue={savedEntry.nickname ?? detail.data!.court.name}
+                placeholder={detail.data!.court.name}
+                onSave={(v) => rename.mutate(v || null)}
+                onCancel={() => setRenaming(false)}
+              />
+            ) : (
+              <h2 className="text-lg font-bold leading-tight flex items-center gap-2">
+                <span className="truncate">
+                  {displayName ?? (detail.isLoading ? 'Loading…' : 'Court')}
+                </span>
+                {isSavedForSport && (
+                  <button
+                    onClick={() => setRenaming(true)}
+                    aria-label="Rename"
+                    className="text-neutral-400 hover:text-neutral-700 text-base shrink-0"
+                  >
+                    ✎
+                  </button>
+                )}
+              </h2>
+            )}
             {detail.data?.court.isCustom && (
               <p className="text-xs text-good font-semibold mt-1">Your custom spot</p>
             )}
-            {detail.data?.court.address && !detail.data?.court.isCustom && (
-              <p className="text-sm text-neutral-500 mt-1">{detail.data.court.address}</p>
+            {detail.data?.court.address && !detail.data?.court.isCustom && !renaming && (
+              <p className="text-sm text-neutral-500 mt-1">
+                {savedEntry?.nickname && (
+                  <span className="text-xs italic mr-2">({detail.data.court.name})</span>
+                )}
+                {detail.data.court.address}
+              </p>
             )}
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-neutral-400 hover:text-neutral-700 text-2xl leading-none"
+            className="text-neutral-400 hover:text-neutral-700 text-2xl leading-none shrink-0"
           >
             ×
           </button>
