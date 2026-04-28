@@ -105,21 +105,29 @@ export function MapView({
     >
       {pins.map((p) => {
         const isSelected = p.placeId === selectedPlaceId;
-        const baseScale = p.isSavedForSport ? 9 : 7;
+        // Stars need more bounding-box than circles to read at the same
+        // weight — the points are mostly negative space. Bumped to 13
+        // (vs circle's 7) so saved courts are unmistakably distinct.
+        const baseScale = p.isSavedForSport ? 13 : 7;
         const scale = isSelected ? baseScale * 1.3 : baseScale;
+        // Stars get a dark outline (white blends with pale map backgrounds);
+        // circles keep their white outline (their solid fill carries them).
+        const strokeColor = p.isSavedForSport ? '#171717' : '#fff';
+        const strokeWeight = isSelected ? (p.isSavedForSport ? 2.5 : 3) : (p.isSavedForSport ? 1.75 : 2);
         return (
           <Marker
             key={p.placeId}
             position={{ lat: p.lat, lng: p.lng }}
             title={p.name}
             onClick={() => onSelect(p.placeId)}
+            zIndex={p.isSavedForSport ? 2 : 1}
             icon={{
               path: p.isSavedForSport ? STAR_PATH : google.maps.SymbolPath.CIRCLE,
               scale,
               fillColor: colorFor(p.score),
               fillOpacity: 1,
-              strokeColor: '#fff',
-              strokeWeight: isSelected ? 3 : 2,
+              strokeColor,
+              strokeWeight,
             }}
           />
         );
