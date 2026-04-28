@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useThresholds } from '../stores/thresholds';
@@ -11,14 +10,17 @@ import type { User } from '../types';
 export function SettingsPage({ user }: { user: User }) {
   const [thresholds, setThresholds, resetThresholds] = useThresholds();
   const [sport, setSport] = useSport();
-  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const logout = useMutation({
     mutationFn: api.logout,
     onSuccess: () => {
+      // Hard reload guarantees the user/me query resets and any cached
+      // session-tied UI (avatar, saved courts) actually clears. React
+      // Router's navigate alone left the avatar in place because the
+      // me query didn't always refetch after qc.clear() + navigate.
       qc.clear();
-      navigate('/login', { replace: true });
+      window.location.href = '/login';
     },
   });
 
