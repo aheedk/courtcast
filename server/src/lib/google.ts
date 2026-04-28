@@ -69,6 +69,12 @@ export async function fetchNearbyCourts(
   const keyword = buildPlacesKeyword(sport, userKeyword);
   const hasUserKeyword = !!(userKeyword && userKeyword.trim());
 
+  // No keyword → no Places query. Returns empty so custom-mode users
+  // see only their saved + custom-dropped pins until they search.
+  if (!keyword.trim()) {
+    return { courts: [], stale: false };
+  }
+
   // Cache key includes sport so tennis and basketball pin sets don't collide.
   // Queries with a user keyword bypass cache (high cardinality).
   const cacheKey = `${geohashFor(lat, lng, PRECISION.places)}:${sport}`;
