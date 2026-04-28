@@ -6,11 +6,12 @@ import { SavedCourtCard } from '../components/SavedCourtCard';
 import { CourtPanel } from '../components/CourtPanel';
 import { ListsTab } from '../components/ListsTab';
 import { ListView } from '../components/ListView';
+import { CustomSavesSection } from '../components/CustomSavesSection';
 import { useUi } from '../stores/ui';
 import type { Sport, User } from '../types';
 import { SPORTS, SPORT_LABEL, SPORT_EMOJI } from '../types';
 
-type TabValue = 'all' | Sport | 'custom';
+type TabValue = 'all' | Sport;
 
 export function MyCourtsPage({ user }: { user: User }) {
   const { selectedPlaceId, selectCourt } = useUi();
@@ -20,14 +21,11 @@ export function MyCourtsPage({ user }: { user: User }) {
 
   const allCourts = saved.data?.courts ?? [];
   const filtered =
-    tab === 'all' || tab === 'custom'
-      ? allCourts
-      : allCourts.filter((c) => c.sport === tab);
+    tab === 'all' ? allCourts : allCourts.filter((c) => c.sport === tab);
 
   const tabs: { value: TabValue; label: string }[] = [
     { value: 'all', label: 'All' },
     ...SPORTS.map((s) => ({ value: s as TabValue, label: `${SPORT_EMOJI[s]} ${SPORT_LABEL[s]}` })),
-    { value: 'custom', label: '📝 Custom' },
   ];
 
   return (
@@ -61,7 +59,15 @@ export function MyCourtsPage({ user }: { user: User }) {
         selectedListId ? (
           <ListView listId={selectedListId} onBack={() => setSelectedListId(null)} />
         ) : (
-          <ListsTab onSelectList={setSelectedListId} />
+          <>
+            <CustomSavesSection />
+            <section>
+              <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
+                Your lists
+              </h2>
+              <ListsTab onSelectList={setSelectedListId} />
+            </section>
+          </>
         )
       ) : (
         <>
@@ -73,12 +79,12 @@ export function MyCourtsPage({ user }: { user: User }) {
               <h2 className="font-semibold text-lg mb-1">
                 {tab === 'all'
                   ? 'No courts saved yet'
-                  : `No ${SPORT_LABEL[tab as Sport].toLowerCase()} courts saved yet`}
+                  : `No ${SPORT_LABEL[tab].toLowerCase()} courts saved yet`}
               </h2>
               <p className="text-neutral-500 mb-4">
                 {tab === 'all'
                   ? 'Open the map, tap a court, then “Save to My Courts.”'
-                  : `Switch to ${SPORT_EMOJI[tab as Sport]} ${SPORT_LABEL[tab as Sport]} on the map and save some.`}
+                  : `Switch to ${SPORT_EMOJI[tab]} ${SPORT_LABEL[tab]} on the map and save some.`}
               </p>
               <a
                 href="/"
