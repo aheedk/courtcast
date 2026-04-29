@@ -34,7 +34,7 @@ export function MyCourtsPage({ user }: { user: User }) {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
+    <div className="max-w-3xl mx-auto px-4 py-6 overflow-x-hidden">
       <h1 className="text-2xl font-bold mb-4">My Courts</h1>
 
       {allCourts.length > 0 && (
