@@ -4,6 +4,8 @@ import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { SavedCourtCard } from '../components/SavedCourtCard';
 import { CourtPanel } from '../components/CourtPanel';
+import { TimePill } from '../components/TimePill';
+import { TimeScrubber } from '../components/TimeScrubber';
 import { ListsTab } from '../components/ListsTab';
 import { ListView } from '../components/ListView';
 import { CustomSavesSection } from '../components/CustomSavesSection';
@@ -20,6 +22,7 @@ export function MyCourtsPage({ user }: { user: User }) {
   const [enabledSports] = useEnabledSports();
   const [tab, setTab] = useState<TabValue>('all');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+  const [timeSheetOpen, setTimeSheetOpen] = useState(false);
 
   const allCourts = saved.data?.courts ?? [];
   const filtered =
@@ -33,6 +36,12 @@ export function MyCourtsPage({ user }: { user: User }) {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-4">My Courts</h1>
+
+      {allCourts.length > 0 && (
+        <div className="mb-3">
+          <TimePill onTap={() => setTimeSheetOpen(true)} />
+        </div>
+      )}
 
       <div className="flex gap-2 overflow-x-auto pb-1 mb-5 -mx-1 px-1">
         {tabs.map((t) => {
@@ -117,6 +126,30 @@ export function MyCourtsPage({ user }: { user: User }) {
           user={user}
           onClose={() => selectCourt(null)}
         />
+      )}
+
+      {timeSheetOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/30"
+          onClick={() => setTimeSheetOpen(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 sm:max-w-md sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-neutral-900">Pick a time</h3>
+              <button
+                onClick={() => setTimeSheetOpen(false)}
+                aria-label="Close"
+                className="text-neutral-400 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <TimeScrubber />
+          </div>
+        </div>
       )}
     </div>
   );
