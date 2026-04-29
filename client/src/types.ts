@@ -53,6 +53,7 @@ export interface Court {
   score?: PlayabilityScore | null;
   stale?: boolean;
   weather?: WeatherSummary | null;
+  forecast?: Forecast | null;
 }
 
 export interface WeatherSummary {
@@ -61,19 +62,33 @@ export interface WeatherSummary {
   rainPctNext2h: number;
 }
 
+export interface ForecastSlot {
+  ts: number;       // epoch ms, top-of-hour UTC
+  tempF: number;
+  windMph: number;
+  rainPct: number;  // 0..100
+}
+
+export interface Forecast {
+  slots: ForecastSlot[];   // ascending by ts; slots[0] = current hour
+  fetchedAt: number;
+}
+
 export interface SavedCourtDetail extends Court {
   savedAt: string;
   sport: Sport;
   nickname: string | null;
   weather: WeatherSummary | null;
+  forecast: Forecast | null;
   score: PlayabilityScore | null;
   stale: boolean;
 }
 
 export interface CourtDetail {
   court: Court;
-  weather: WeatherSummary;
-  score: PlayabilityScore;
+  weather: WeatherSummary | null;
+  forecast: Forecast | null;
+  score: PlayabilityScore | null;
   stale: boolean;
 }
 
