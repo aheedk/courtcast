@@ -7,6 +7,8 @@ import { useSport } from '../stores/sport';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useThresholds } from '../stores/thresholds';
 import { useEnabledSports } from '../stores/enabledSports';
+import { useSelectedTime } from '../stores/selectedTime';
+import { slotAt } from '../lib/forecast';
 import { scoreFromThresholds } from '../lib/playability';
 import { MapView, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
@@ -15,6 +17,7 @@ import { SportChips } from '../components/SportChips';
 import { AddSpotFab } from '../components/AddSpotFab';
 import { AddSpotSheet } from '../components/AddSpotSheet';
 import { MapLegend } from '../components/MapLegend';
+import { TimeScrubber } from '../components/TimeScrubber';
 import type { User } from '../types';
 
 export function MapPage({ user }: { user: User | null }) {
@@ -57,18 +60,29 @@ export function MapPage({ user }: { user: User | null }) {
   const placesPins = courts.data?.courts ?? [];
   const savedById = new Map(savedForSport.map((s) => [s.placeId, s]));
 
+  const [selectedMs] = useSelectedTime();
+
+  function scorePin(forecast: typeof placesPins[number]['forecast'] | null, fallback: typeof placesPins[number]['score'] | null = null) {
+    const slot = slotAt(forecast ?? null, selectedMs);
+    if (slot) {
+      return scoreFromThresholds(
+        { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
+        thresholds,
+      );
+    }
+    // No slot: out of window when selectedMs is set, or no forecast at all.
+    return selectedMs !== null ? null : (fallback ?? null);
+  }
+
   const pins: PinForMap[] = [
     ...placesPins.map((c) => {
       const s = savedById.get(c.placeId);
-      const w = s?.weather ?? c.weather ?? null;
       return {
         placeId: c.placeId,
         name: c.name,
         lat: c.lat,
         lng: c.lng,
-        score: w
-          ? scoreFromThresholds(w, thresholds)
-          : (s?.score ?? c.score ?? null),
+        score: scorePin(s?.forecast ?? c.forecast ?? null, s?.score ?? c.score ?? null),
         isSavedForSport: !!s,
       };
     }),
@@ -79,9 +93,7 @@ export function MapPage({ user }: { user: User | null }) {
         name: s.name,
         lat: s.lat,
         lng: s.lng,
-        score: s.weather
-          ? scoreFromThresholds(s.weather, thresholds)
-          : (s.score ?? null),
+        score: scorePin(s.forecast ?? null, s.score ?? null),
         isSavedForSport: true,
       })),
   ];
@@ -168,6 +180,12 @@ export function MapPage({ user }: { user: User | null }) {
             setAddMode(false);
           }}
         />
+      )}
+
+      {!addMode && (
+        <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-auto">
+          <TimeScrubber />
+        </div>
       )}
 
       {selectedPlaceId && !addMode && (
