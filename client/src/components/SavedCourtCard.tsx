@@ -43,7 +43,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
   });
 
   const display = court.nickname || court.name;
-  const userScore = useScoreFor(court.weather, court.score);
+  const userScore = useScoreFor(court.weather, court.sport, court.score);
 
   const menuItems = [
     { label: 'Rename', onSelect: () => setRenaming(true) },

@@ -21,7 +21,7 @@ export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
   const { selectedPlaceId, selectCourt } = useUi();
   const [sport, setSport] = useSport();
-  const [thresholds] = useThresholds();
+  const [thresholds] = useThresholds(sport);
   const [enabledSports] = useEnabledSports();
 
   const [center, setCenter] = useState(geoPosition);

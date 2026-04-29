@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useThresholds } from '../stores/thresholds';
@@ -7,12 +8,19 @@ import { SportChips } from '../components/SportChips';
 import { PlayabilityBadge } from '../components/PlayabilityBadge';
 import { scoreFromThresholds } from '../lib/playability';
 import { SPORTS, SPORT_EMOJI, SPORT_LABEL } from '../types';
-import type { User } from '../types';
+import type { Sport, User } from '../types';
 
 export function SettingsPage({ user }: { user: User }) {
-  const [thresholds, setThresholds, resetThresholds] = useThresholds();
   const [sport, setSport] = useSport();
   const [enabledSports, setEnabledSports] = useEnabledSports();
+  const [activeSport, setActiveSport] = useState<Sport>(enabledSports[0] ?? 'tennis');
+  // If user disables the sport currently being edited, snap to first enabled.
+  useEffect(() => {
+    if (!enabledSports.includes(activeSport)) {
+      setActiveSport(enabledSports[0] ?? 'tennis');
+    }
+  }, [enabledSports, activeSport]);
+  const [thresholds, setThresholds, resetThresholds] = useThresholds(activeSport);
   const qc = useQueryClient();
 
   const logout = useMutation({

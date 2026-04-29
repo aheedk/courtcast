@@ -39,7 +39,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   );
   const isSavedForSport = !!savedEntry;
   const displayName = savedEntry?.nickname || detail.data?.court.name;
-  const userScore = useScoreFor(detail.data?.weather, detail.data?.score ?? null);
+  const userScore = useScoreFor(detail.data?.weather, sport, detail.data?.score ?? null);
 
   const save = useMutation({
     mutationFn: () => api.saveCourt(placeId, sport),
