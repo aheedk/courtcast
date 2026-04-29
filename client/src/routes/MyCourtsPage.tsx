@@ -130,7 +130,7 @@ export function MyCourtsPage({ user }: { user: User }) {
 
       {timeSheetOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/30"
+          className="fixed inset-0 z-30"
           onClick={() => setTimeSheetOpen(false)}
         >
           <div
