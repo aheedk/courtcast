@@ -26,7 +26,7 @@ const containerStyle = { width: '100%', height: '100%' };
 
 const mapOptions: google.maps.MapOptions = {
   disableDefaultUI: true,
-  zoomControl: true,
+  zoomControl: false,
   clickableIcons: false,
   styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
 };
