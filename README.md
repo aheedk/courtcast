@@ -31,7 +31,7 @@ thresholds**.
 | Server | Node 20 + Express + TypeScript + Prisma |
 | DB | PostgreSQL (Docker locally; Railway-managed in prod) |
 | Auth | Google Sign-In (Identity Services) → server-side ID token verification → HTTP-only `cc_session` cookie |
-| Weather | OpenWeatherMap (5-day/3-hour forecast, geohash-5 cached 10 min) |
+| Weather | Open-Meteo (hourly, 48h, no key) — default; OpenWeatherMap (5-day/3-hour, interpolated to hourly) as fallback. Geohash-5 cached 10 min via `weather.ts` dispatcher. |
 | Places | Google Maps Places Nearby Search (geohash-4 cached 7 days) |
 
 ## Features (rough chronological build order)
@@ -87,7 +87,7 @@ npm run dev --prefix client   # http://localhost:5173 — open this
 
 ### Tests
 ```bash
-npm test --prefix server   # 38 tests as of last commit
+npm test --prefix server   # 53 tests as of last commit
 ```
 
 ## Production env
@@ -119,13 +119,14 @@ client/                          Vite + React frontend
                                  AddToListMenu, AddSpotFab, AddSpotSheet,
                                  ListsTab, ListView, CustomSavesSection,
                                  PlayabilityBadge, WeatherStats, MapLegend,
-                                 TopBar, AuthGate
+                                 TimeScrubber, TimePill, TopBar, AuthGate
     stores/                      sport (current chip), enabledSports,
-                                 thresholds (per-sport), ui (selected court)
+                                 thresholds (per-sport), selectedTime
+                                 (forecast scrubber time), ui (selected court)
     hooks/                       useGeolocation
     lib/                         api (fetch wrapper), playability
-                                 (scoreFromThresholds), queryClient,
-                                 env
+                                 (scoreFromThresholds), forecast (slotAt),
+                                 queryClient, env
 
 server/                          Express + Prisma backend
   prisma/schema.prisma           User, Session, Court, SavedCourt, List,
@@ -135,14 +136,17 @@ server/                          Express + Prisma backend
                                  meCourts (saved + nickname + custom),
                                  meLists (lists CRUD + members)
     lib/                         google (Places + ID token verifier),
-                                 openweather, playability (scoring),
-                                 sport (keyword library), cache (geohash),
-                                 prisma, env
+                                 weather (dispatcher), openmeteo,
+                                 openweather (now returns Forecast),
+                                 forecast (Forecast types + helper),
+                                 playability (scoring), sport (keyword
+                                 library), cache (geohash), prisma, env
     middleware/                  auth (loadSession + requireAuth), errors
     app.ts                       Express bootstrap; serves client/dist as
                                  static SPA in prod (the bit that lets us
                                  ditch Netlify)
-  test/                          playability, sport, api.smoke (vitest)
+  test/                          playability, sport, forecast, openmeteo,
+                                 openweather, weather, api.smoke (vitest)
 
 docs/superpowers/
   specs/                         One design doc per feature round
@@ -174,7 +178,7 @@ DEPLOY.md                        Old Netlify + Railway flow — partly stale
   reliably and was reverted in `0055f9a`.
 - **Server-side weather fetch on every `/api/courts`** — geohash-5
   cached, so most pins in a small radius hit the cache. First-load
-  in a new area: ~3 OWM calls.
+  in a new area: ~3 weather provider calls (Open-Meteo by default).
 - **All UI prefs in `localStorage`** — sport chip, enabled sports,
   per-sport thresholds, anything in Settings. Per-device, no sync. If
   cross-device sync becomes an ask, promote to a `UserSettings` table.
