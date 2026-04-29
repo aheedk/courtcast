@@ -10,7 +10,7 @@ export interface Thresholds {
 export const DEFAULT_THRESHOLDS: Thresholds = {
   rainMaxGood: 30,
   rainMaxOk: 60,
-  windMaxGood: 12,
+  windMaxGood: 15,
   windMaxOk: 25,
 };
 
