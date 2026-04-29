@@ -3,7 +3,8 @@ import { env } from './env';
 import { getCached, putCached, geohashFor, TTL, PRECISION } from './cache';
 import { prisma } from './prisma';
 import { buildPlacesKeyword, type Sport } from './sport';
-import { fetchWeather } from './openweather';
+import { fetchForecast } from './weather';
+import { weatherFromForecast, type Forecast } from './forecast';
 import { score, type PlayabilityScore, type WeatherSummary } from './playability';
 
 const oauthClient = new OAuth2Client(env.googleOauthClientId);
@@ -49,6 +50,7 @@ export interface HydratedCourt extends CourtSummary {
   score: PlayabilityScore | null;
   stale: boolean;
   weather: WeatherSummary | null;
+  forecast: Forecast | null;
 }
 
 interface PlacesNearbyResponse {
@@ -65,7 +67,7 @@ interface PlacesNearbyResponse {
 /**
  * Fetches nearby tennis courts from Google Places Nearby Search.
  * Cached server-side by geohash (precision 4, ~20km cell) for 7 days.
- * Each returned court is hydrated with score + stale via fetchWeather
+ * Each returned court is hydrated with score + stale via fetchForecast
  * (geohash-5-cached, so most calls in a small radius hit the cache).
  * On upstream Places failure, returns the stale cached metadata if
  * available (still hydrated with current weather).
@@ -156,10 +158,17 @@ async function hydrateCourts(courts: CourtSummary[]): Promise<HydratedCourt[]> {
   return Promise.all(
     courts.map(async (c) => {
       try {
-        const w = await fetchWeather(c.lat, c.lng);
-        return { ...c, score: score(w.weather), stale: w.stale, weather: w.weather };
+        const r = await fetchForecast(c.lat, c.lng);
+        const weather = weatherFromForecast(r.forecast);
+        return {
+          ...c,
+          forecast: r.forecast,
+          weather,
+          score: weather ? score(weather) : null,
+          stale: r.stale,
+        };
       } catch {
-        return { ...c, score: null, stale: true, weather: null };
+        return { ...c, forecast: null, weather: null, score: null, stale: true };
       }
     }),
   );

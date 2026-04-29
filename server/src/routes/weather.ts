@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { fetchWeather } from '../lib/openweather';
+import { fetchForecast } from '../lib/weather';
+import { weatherFromForecast } from '../lib/forecast';
 
 const router = Router();
 
@@ -12,8 +13,12 @@ const querySchema = z.object({
 router.get('/', async (req, res, next) => {
   try {
     const { lat, lng } = querySchema.parse(req.query);
-    const result = await fetchWeather(lat, lng);
-    res.json({ weather: result.weather, stale: result.stale });
+    const r = await fetchForecast(lat, lng);
+    res.json({
+      forecast: r.forecast,
+      weather: weatherFromForecast(r.forecast),
+      stale: r.stale,
+    });
   } catch (err) {
     next(err);
   }

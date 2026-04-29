@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
-import { fetchWeather } from '../lib/openweather';
+import { fetchForecast } from '../lib/weather';
+import { weatherFromForecast } from '../lib/forecast';
 import { score } from '../lib/playability';
 import { SPORTS } from '../lib/sport';
 
@@ -23,15 +24,17 @@ router.get('/', async (req, res, next) => {
     const hydrated = await Promise.all(
       saved.map(async (s) => {
         try {
-          const w = await fetchWeather(s.court.lat, s.court.lng);
+          const r = await fetchForecast(s.court.lat, s.court.lng);
+          const weather = weatherFromForecast(r.forecast);
           return {
             ...s.court,
             savedAt: s.createdAt,
             sport: s.sport,
             nickname: s.nickname,
-            weather: w.weather,
-            score: score(w.weather),
-            stale: w.stale,
+            forecast: r.forecast,
+            weather,
+            score: weather ? score(weather) : null,
+            stale: r.stale,
           };
         } catch {
           return {
@@ -39,6 +42,7 @@ router.get('/', async (req, res, next) => {
             savedAt: s.createdAt,
             sport: s.sport,
             nickname: s.nickname,
+            forecast: null,
             weather: null,
             score: null,
             stale: true,
@@ -107,14 +111,16 @@ router.post('/custom', async (req, res, next) => {
       return { court, saved };
     });
 
+    let forecast = null;
     let weather = null;
     let scoreVal = null;
     let stale = true;
     try {
-      const w = await fetchWeather(lat, lng);
-      weather = w.weather;
-      scoreVal = score(w.weather);
-      stale = w.stale;
+      const r = await fetchForecast(lat, lng);
+      forecast = r.forecast;
+      weather = weatherFromForecast(r.forecast);
+      scoreVal = weather ? score(weather) : null;
+      stale = r.stale;
     } catch {
       // weather may transiently fail — saving still succeeds
     }
@@ -125,6 +131,7 @@ router.post('/custom', async (req, res, next) => {
         savedAt: created.saved.createdAt,
         sport: created.saved.sport,
         nickname: null,
+        forecast,
         weather,
         score: scoreVal,
         stale,

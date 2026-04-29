@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { fetchWeather } from '../lib/openweather';
+import { fetchForecast } from '../lib/weather';
+import { weatherFromForecast } from '../lib/forecast';
 import { score } from '../lib/playability';
 
 const router = Router();
@@ -11,12 +12,14 @@ router.get('/:placeId', async (req, res, next) => {
     if (!court) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Court not found' } });
     }
-    const w = await fetchWeather(court.lat, court.lng);
+    const r = await fetchForecast(court.lat, court.lng);
+    const weather = weatherFromForecast(r.forecast);
     res.json({
       court,
-      weather: w.weather,
-      score: score(w.weather),
-      stale: w.stale,
+      forecast: r.forecast,
+      weather,
+      score: weather ? score(weather) : null,
+      stale: r.stale,
     });
   } catch (err) {
     next(err);

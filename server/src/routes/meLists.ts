@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
-import { fetchWeather } from '../lib/openweather';
+import { fetchForecast } from '../lib/weather';
+import { weatherFromForecast } from '../lib/forecast';
 import { score } from '../lib/playability';
 import { SPORTS } from '../lib/sport';
 
@@ -72,15 +73,17 @@ router.get('/:id', async (req, res, next) => {
         });
         if (!saved) return null;
         try {
-          const w = await fetchWeather(saved.court.lat, saved.court.lng);
+          const r = await fetchForecast(saved.court.lat, saved.court.lng);
+          const weather = weatherFromForecast(r.forecast);
           return {
             ...saved.court,
             savedAt: saved.createdAt,
             sport: saved.sport,
             nickname: saved.nickname,
-            weather: w.weather,
-            score: score(w.weather),
-            stale: w.stale,
+            forecast: r.forecast,
+            weather,
+            score: weather ? score(weather) : null,
+            stale: r.stale,
           };
         } catch {
           return {
@@ -88,6 +91,7 @@ router.get('/:id', async (req, res, next) => {
             savedAt: saved.createdAt,
             sport: saved.sport,
             nickname: saved.nickname,
+            forecast: null,
             weather: null,
             score: null,
             stale: true,
