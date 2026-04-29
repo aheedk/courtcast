@@ -38,6 +38,8 @@ export function SettingsPage({ user }: { user: User }) {
   // Constraints: rainMaxGood < rainMaxOk so GOOD remains reachable.
   const rainGoodMax = Math.max(0, thresholds.rainMaxOk - 1);
   const rainOkMin = Math.min(100, thresholds.rainMaxGood + 1);
+  const windGoodMax = Math.max(0, thresholds.windMaxOk - 1);
+  const windOkMin = Math.min(50, thresholds.windMaxGood + 1);
 
   // Static sample for the live preview chip.
   const preview = scoreFromThresholds(
@@ -69,8 +71,28 @@ export function SettingsPage({ user }: { user: User }) {
           Playability thresholds
         </h2>
         <p className="text-sm text-neutral-500 mb-4">
-          Customize when GOOD / OK / BAD applies to courts on the map.
+          Customize when GOOD / OK / BAD applies — different per sport.
         </p>
+
+        <div className="flex flex-wrap gap-2 mb-4">
+          {enabledSports.map((s) => {
+            const active = s === activeSport;
+            return (
+              <button
+                key={s}
+                onClick={() => setActiveSport(s)}
+                aria-pressed={active}
+                className={
+                  active
+                    ? 'shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold bg-neutral-900 text-white'
+                    : 'shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-50'
+                }
+              >
+                {SPORT_EMOJI[s]} {SPORT_LABEL[s]}
+              </button>
+            );
+          })}
+        </div>
 
         <ThresholdSlider
           label="Rain — GOOD when below"
@@ -92,13 +114,21 @@ export function SettingsPage({ user }: { user: User }) {
           label="Wind — GOOD when below"
           value={thresholds.windMaxGood}
           min={0}
-          max={25}
+          max={windGoodMax}
           unit=" mph"
           onChange={(v) => setThresholds({ ...thresholds, windMaxGood: v })}
         />
+        <ThresholdSlider
+          label="Wind — BAD when above"
+          value={thresholds.windMaxOk}
+          min={windOkMin}
+          max={50}
+          unit=" mph"
+          onChange={(v) => setThresholds({ ...thresholds, windMaxOk: v })}
+        />
 
         <div className="mt-5 flex items-center gap-3 text-sm text-neutral-600">
-          <span>Sample: 20% rain, 8 mph wind →</span>
+          <span>Sample ({SPORT_LABEL[activeSport]}): 20% rain, 8 mph wind →</span>
           <PlayabilityBadge score={preview} size="sm" />
         </div>
 
@@ -106,7 +136,7 @@ export function SettingsPage({ user }: { user: User }) {
           onClick={resetThresholds}
           className="mt-4 text-sm text-good font-semibold hover:underline"
         >
-          Reset to defaults
+          Reset {SPORT_LABEL[activeSport]} to defaults
         </button>
       </section>
 

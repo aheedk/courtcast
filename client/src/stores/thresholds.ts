@@ -17,9 +17,10 @@ function clampInt(v: unknown, min: number, max: number, fallback: number): numbe
 function clampThresholds(t: unknown): Thresholds {
   const raw = (t && typeof t === 'object') ? (t as Partial<Thresholds>) : {};
   return {
-    rainMaxGood: clampInt(raw.rainMaxGood, 0, 60, DEFAULT_THRESHOLDS.rainMaxGood),
+    rainMaxGood: clampInt(raw.rainMaxGood, 0, 80, DEFAULT_THRESHOLDS.rainMaxGood),
     rainMaxOk: clampInt(raw.rainMaxOk, 30, 100, DEFAULT_THRESHOLDS.rainMaxOk),
-    windMaxGood: clampInt(raw.windMaxGood, 0, 25, DEFAULT_THRESHOLDS.windMaxGood),
+    windMaxGood: clampInt(raw.windMaxGood, 0, 40, DEFAULT_THRESHOLDS.windMaxGood),
+    windMaxOk: clampInt(raw.windMaxOk, 8, 50, DEFAULT_THRESHOLDS.windMaxOk),
   };
 }
 
