@@ -1,6 +1,16 @@
-import type { WeatherSummary } from '../types';
+import type { Forecast } from '../types';
+import { slotAt } from '../lib/forecast';
+import { useSelectedTime } from '../stores/selectedTime';
 
-export function WeatherStats({ weather, compact = false }: { weather: WeatherSummary; compact?: boolean }) {
+interface Props {
+  forecast: Forecast | null;
+  compact?: boolean;
+}
+
+export function WeatherStats({ forecast, compact = false }: Props) {
+  const [selectedMs] = useSelectedTime();
+  const slot = slotAt(forecast, selectedMs);
+
   const stat = (label: string, value: string) => (
     <div className="flex flex-col">
       <span className="text-[11px] uppercase tracking-wide text-neutral-500">{label}</span>
@@ -8,11 +18,21 @@ export function WeatherStats({ weather, compact = false }: { weather: WeatherSum
     </div>
   );
 
+  if (!slot) {
+    return (
+      <div className={`grid grid-cols-3 gap-4 ${compact ? '' : 'mt-2'}`}>
+        {stat('Temp', '—')}
+        {stat('Wind', '—')}
+        {stat('Rain', '—')}
+      </div>
+    );
+  }
+
   return (
     <div className={`grid grid-cols-3 gap-4 ${compact ? '' : 'mt-2'}`}>
-      {stat('Temp', `${weather.tempF}°F`)}
-      {stat('Wind', `${weather.windMph} mph`)}
-      {stat('Rain (2h)', `${weather.rainPctNext2h}%`)}
+      {stat('Temp', `${slot.tempF}°F`)}
+      {stat('Wind', `${slot.windMph} mph`)}
+      {stat('Rain', `${slot.rainPct}%`)}
     </div>
   );
 }

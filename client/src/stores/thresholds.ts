@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import type { PlayabilityScore, Sport, WeatherSummary } from '../types';
+import type { Forecast, PlayabilityScore, Sport } from '../types';
+import { slotAt } from '../lib/forecast';
+import { useSelectedTime } from './selectedTime';
 import { SPORTS } from '../types';
 import { DEFAULT_THRESHOLDS, scoreFromThresholds, type Thresholds } from '../lib/playability';
 
@@ -79,11 +81,17 @@ export function useThresholds(sport: Sport): [Thresholds, (next: Thresholds) => 
 }
 
 export function useScoreFor(
-  weather: WeatherSummary | null | undefined,
+  forecast: Forecast | null | undefined,
   sport: Sport,
   fallback: PlayabilityScore | null = null,
 ): PlayabilityScore | null {
   const [t] = useThresholds(sport);
-  if (!weather) return fallback;
-  return scoreFromThresholds(weather, t);
+  const [selectedMs] = useSelectedTime();
+  if (!forecast) return fallback;
+  const slot = slotAt(forecast, selectedMs);
+  if (!slot) return null; // out of window
+  return scoreFromThresholds(
+    { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
+    t,
+  );
 }
