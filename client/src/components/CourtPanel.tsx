@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { useSport } from '../stores/sport';
 import { useScoreFor } from '../stores/thresholds';
+import { useSelectedTime } from '../stores/selectedTime';
 import type { User } from '../types';
 import { SPORT_LABEL, SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
@@ -39,7 +40,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   );
   const isSavedForSport = !!savedEntry;
   const displayName = savedEntry?.nickname || detail.data?.court.name;
-  const userScore = useScoreFor(detail.data?.weather, sport, detail.data?.score ?? null);
+  const userScore = useScoreFor(detail.data?.forecast ?? null, sport, detail.data?.score ?? null);
 
   const save = useMutation({
     mutationFn: () => api.saveCourt(placeId, sport),
@@ -127,12 +128,13 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
           <>
             <div className="mt-5">
               {userScore && <PlayabilityBadge score={userScore} size="lg" />}
+              <ForecastLabel />
               {detail.data.stale && (
                 <p className="mt-2 text-xs text-neutral-500">Showing last cached weather.</p>
               )}
             </div>
 
-            <WeatherStats weather={detail.data.weather} />
+            <WeatherStats forecast={detail.data.forecast ?? null} />
 
             <div className="mt-6 flex flex-col gap-2">
               {!user ? (
@@ -183,5 +185,24 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
         />
       )}
     </aside>
+  );
+}
+
+function ForecastLabel() {
+  const [selectedMs] = useSelectedTime();
+  if (selectedMs === null) return null;
+  const d = new Date(selectedMs);
+  const now = Date.now();
+  const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+  const targetDay = new Date(d); targetDay.setHours(0, 0, 0, 0);
+  const dayDelta = Math.round((targetDay.getTime() - todayStart.getTime()) / (24 * 3600_000));
+  const day = dayDelta === 0 ? 'today' : dayDelta === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'long' }).toLowerCase();
+  const hour = d.getHours();
+  const ampm = hour < 12 ? 'am' : 'pm';
+  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+  return (
+    <p className="mt-1 text-xs text-neutral-500">
+      Forecast for {day} {hour12}{ampm}.
+    </p>
   );
 }

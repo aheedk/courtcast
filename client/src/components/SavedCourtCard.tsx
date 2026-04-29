@@ -43,7 +43,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
   });
 
   const display = court.nickname || court.name;
-  const userScore = useScoreFor(court.weather, court.sport, court.score);
+  const userScore = useScoreFor(court.forecast ?? null, court.sport, court.score);
 
   const menuItems = [
     { label: 'Rename', onSelect: () => setRenaming(true) },
@@ -92,9 +92,9 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
           </div>
         </div>
 
-        {court.weather ? (
+        {court.forecast ? (
           <div className="mt-3">
-            <WeatherStats weather={court.weather} compact />
+            <WeatherStats forecast={court.forecast ?? null} compact />
           </div>
         ) : (
           <p className="mt-3 text-sm text-neutral-500">Weather unavailable right now.</p>
