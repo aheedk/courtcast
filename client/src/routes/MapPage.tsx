@@ -182,7 +182,7 @@ export function MapPage({ user }: { user: User | null }) {
         />
       )}
 
-      {!addMode && (
+      {!addMode && !selectedPlaceId && (
         <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-auto">
           <TimeScrubber />
         </div>

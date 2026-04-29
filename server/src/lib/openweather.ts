@@ -28,6 +28,11 @@ function clampInt(v: number, min: number, max: number): number {
  * available OWM sample.
  */
 export async function fetchOpenWeatherForecast(lat: number, lng: number): Promise<Forecast> {
+  if (!env.openweatherKey) {
+    throw new Error(
+      'OPENWEATHER_KEY is required when WEATHER_PROVIDER=openweather. Set it or switch WEATHER_PROVIDER to open-meteo.',
+    );
+  }
   const url = new URL('https://api.openweathermap.org/data/2.5/forecast');
   url.searchParams.set('lat', String(lat));
   url.searchParams.set('lon', String(lng));

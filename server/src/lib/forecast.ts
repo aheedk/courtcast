@@ -18,8 +18,8 @@ export interface Forecast {
  * existing `weather` field on API responses).
  */
 export function weatherFromForecast(forecast: Forecast | null): WeatherSummary | null {
-  const slot = forecast?.slots[0] ?? null;
-  if (!slot) return null;
+  if (!forecast || !Array.isArray(forecast.slots) || forecast.slots.length === 0) return null;
+  const slot = forecast.slots[0];
   return {
     tempF: slot.tempF,
     windMph: slot.windMph,

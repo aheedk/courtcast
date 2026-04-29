@@ -87,11 +87,13 @@ export function useScoreFor(
 ): PlayabilityScore | null {
   const [t] = useThresholds(sport);
   const [selectedMs] = useSelectedTime();
-  if (!forecast) return fallback;
   const slot = slotAt(forecast, selectedMs);
-  if (!slot) return null; // out of window
-  return scoreFromThresholds(
-    { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
-    t,
-  );
+  if (slot) {
+    return scoreFromThresholds(
+      { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
+      t,
+    );
+  }
+  // No slot: out of window when a future time is selected, or no forecast at all.
+  return selectedMs !== null ? null : fallback;
 }

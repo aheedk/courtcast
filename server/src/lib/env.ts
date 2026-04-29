@@ -27,7 +27,7 @@ export const env = {
   databaseUrl: required('DATABASE_URL'),
   googleOauthClientId: required('GOOGLE_OAUTH_CLIENT_ID'),
   googlePlacesKey: required('GOOGLE_PLACES_KEY'),
-  openweatherKey: required('OPENWEATHER_KEY'),
+  openweatherKey: process.env.OPENWEATHER_KEY ?? '', // Required only when WEATHER_PROVIDER=openweather
   weatherProvider: weatherProvider(),
   defaultLat: parseFloat(optional('DEFAULT_LAT', '40.7831')),
   defaultLng: parseFloat(optional('DEFAULT_LNG', '-73.9712')),

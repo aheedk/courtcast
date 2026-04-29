@@ -102,7 +102,7 @@ These need to be set on the Railway server service:
 | `CLIENT_ORIGIN` | `https://courtclimate.com` (also accepts `*.up.railway.app`) |
 | `GOOGLE_OAUTH_CLIENT_ID` | Same as client side |
 | `GOOGLE_PLACES_KEY` | **Server-side key** with no application restriction (browser-restricted key won't work for server fetch) |
-| `OPENWEATHER_KEY` | OWM free-tier key |
+| `OPENWEATHER_KEY` | Required only when WEATHER_PROVIDER=openweather. OWM free-tier key. |
 
 The client-side env vars (`VITE_GOOGLE_MAPS_KEY`,
 `VITE_GOOGLE_OAUTH_CLIENT_ID`) are baked into the Vite build — set
