@@ -186,19 +186,16 @@ DEPLOY.md                        Old Netlify + Railway flow — partly stale
 
 ## In-flight / scheduled
 
-- **Scheduled remote agent** — fires once on **2026-05-11T16:00Z**
-  (~12pm ET). Will open a PR adding **Open-Meteo** as an alternative
-  weather provider behind a `WEATHER_PROVIDER` env flag. Routine ID:
-  `trig_01KD12VvGPQnspTqWwfNDE13`. View at
-  https://claude.ai/code/routines/trig_01KD12VvGPQnspTqWwfNDE13
-  - **Heads-up:** it needs the Claude GitHub App installed on the repo
-    (or `/web-setup`-synced GitHub creds) to actually push the PR. If
-    that's not done by 2026-05-11, the agent fires but can't push.
-- **Per-sport thresholds** — round 11 spec was approved and
-  implemented through Task 5; the SettingsPage edits and call sites
-  are wired but the round wasn't pushed yet at the time the README was
-  written. The branch state should be verified before the next session
-  picks anything new up: `git status` and `git log -1` to confirm.
+- **Open-Meteo provider — live.** As of 2026-04-29, the default weather
+  provider is Open-Meteo (hourly, free, no API key). Set
+  `WEATHER_PROVIDER=openweather` to fall back to OWM. The previously
+  scheduled remote agent for adding Open-Meteo (routine
+  `trig_01KD12VvGPQnspTqWwfNDE13`, fire date 2026-05-11) has been
+  canceled because this work absorbs it.
+- **Time-changer — live.** Bottom-of-map slider on the MapPage and a
+  time-pill / bottom-sheet on My Courts let users scrub the next 48h
+  in 2-hour increments. Pin colors, court panel, and saved-card scores
+  all reflect the selected time.
 
 ## Known issues
 
