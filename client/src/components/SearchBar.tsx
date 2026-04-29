@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { useJsApiLoader } from '@react-google-maps/api';
+import { env } from '../lib/env';
+
+const PLACES_LIBS: ('places')[] = ['places'];
 
 type Mode = 'place' | 'keyword';
 
@@ -21,15 +25,26 @@ export function SearchBar({ onPlaceSelected, onKeywordChange, initialKeyword = '
   const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
   const debounceRef = useRef<number | null>(null);
 
+  // Share the same loader instance MapView uses (id is the cache key).
+  // Without this, SearchBar's init effect ran once on mount before the
+  // Maps API had finished loading and never retried, so Place autocomplete
+  // silently did nothing — surfaced when location was denied because users
+  // immediately started typing instead of looking at pins first.
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-maps-script',
+    googleMapsApiKey: env.googleMapsKey,
+    libraries: PLACES_LIBS,
+  });
+
   useEffect(() => {
-    if (!window.google?.maps?.places) return;
+    if (!isLoaded) return;
     if (!autocompleteRef.current) {
       autocompleteRef.current = new google.maps.places.AutocompleteService();
     }
     if (!placesServiceRef.current) {
       placesServiceRef.current = new google.maps.places.PlacesService(document.createElement('div'));
     }
-  }, []);
+  }, [isLoaded]);
 
   useEffect(() => {
     if (mode !== 'place') {
