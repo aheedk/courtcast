@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
@@ -60,6 +60,20 @@ export function MapPage({ user }: { user: User | null }) {
   const placesPins = courts.data?.courts ?? [];
   const savedById = new Map(savedForSport.map((s) => [s.placeId, s]));
 
+  const visiblePlaceIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const c of placesPins) ids.add(c.placeId);
+    for (const s of savedForSport) ids.add(s.placeId);
+    return [...ids];
+  }, [placesPins, savedForSport]);
+
+  const reports = useQuery({
+    queryKey: queryKeys.courtReportsBatch(visiblePlaceIds),
+    queryFn: () => api.courtReportsBatch(visiblePlaceIds),
+    enabled: visiblePlaceIds.length > 0,
+    staleTime: 60_000,
+  });
+
   const [selectedMs] = useSelectedTime();
 
   function scorePin(forecast: typeof placesPins[number]['forecast'] | null, fallback: typeof placesPins[number]['score'] | null = null) {
@@ -74,6 +88,9 @@ export function MapPage({ user }: { user: User | null }) {
     return selectedMs !== null ? null : (fallback ?? null);
   }
 
+  const reportMap = reports.data?.reports ?? {};
+  const hasReport = (placeId: string) => !!reportMap[placeId];
+
   const pins: PinForMap[] = [
     ...placesPins.map((c) => {
       const s = savedById.get(c.placeId);
@@ -84,6 +101,7 @@ export function MapPage({ user }: { user: User | null }) {
         lng: c.lng,
         score: scorePin(s?.forecast ?? c.forecast ?? null, s?.score ?? c.score ?? null),
         isSavedForSport: !!s,
+        hasFreshReport: hasReport(c.placeId),
       };
     }),
     ...savedForSport
@@ -95,6 +113,7 @@ export function MapPage({ user }: { user: User | null }) {
         lng: s.lng,
         score: scorePin(s.forecast ?? null, s.score ?? null),
         isSavedForSport: true,
+        hasFreshReport: hasReport(s.placeId),
       })),
   ];
 

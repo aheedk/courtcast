@@ -10,6 +10,8 @@ import { WeatherStats } from './WeatherStats';
 import { CardMenu } from './CardMenu';
 import { RenameInput } from './RenameInput';
 import { AddToListMenu } from './AddToListMenu';
+import { LatestReport } from './LatestReport';
+import type { CourtReport } from '../types';
 
 interface Props {
   court: SavedCourtDetail;
@@ -17,9 +19,12 @@ interface Props {
   // When provided, replaces the default sport-scoped Remove with a
   // list-scoped "Remove from this list" action.
   listScopedRemove?: () => void;
+  // Pre-fetched latest report from a batch query; `undefined` means
+  // "fetch your own", `null` means "no fresh report".
+  report?: CourtReport | null;
 }
 
-export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
+export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Props) {
   const qc = useQueryClient();
   const [renaming, setRenaming] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
@@ -99,6 +104,10 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove }: Props) {
         ) : (
           <p className="mt-3 text-sm text-neutral-500">Weather unavailable right now.</p>
         )}
+
+        <div className="mt-2">
+          <LatestReport placeId={court.placeId} report={report} compact />
+        </div>
       </div>
 
       {addingToList && (

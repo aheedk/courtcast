@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import type { PlayabilityScore } from '../types';
 import { env } from '../lib/env';
@@ -10,6 +10,7 @@ export interface PinForMap {
   lng: number;
   score: PlayabilityScore | null;
   isSavedForSport: boolean;
+  hasFreshReport?: boolean;
 }
 
 interface Props {
@@ -115,21 +116,44 @@ export function MapView({
         const strokeColor = p.isSavedForSport ? '#171717' : '#fff';
         const strokeWeight = isSelected ? (p.isSavedForSport ? 2.5 : 3) : (p.isSavedForSport ? 1.75 : 2);
         return (
-          <Marker
-            key={p.placeId}
-            position={{ lat: p.lat, lng: p.lng }}
-            title={p.name}
-            onClick={() => onSelect(p.placeId)}
-            zIndex={p.isSavedForSport ? 2 : 1}
-            icon={{
-              path: p.isSavedForSport ? STAR_PATH : google.maps.SymbolPath.CIRCLE,
-              scale,
-              fillColor: colorFor(p.score),
-              fillOpacity: 1,
-              strokeColor,
-              strokeWeight,
-            }}
-          />
+          <Fragment key={p.placeId}>
+            <Marker
+              position={{ lat: p.lat, lng: p.lng }}
+              title={p.name}
+              onClick={() => onSelect(p.placeId)}
+              zIndex={p.isSavedForSport ? 2 : 1}
+              icon={{
+                path: p.isSavedForSport ? STAR_PATH : google.maps.SymbolPath.CIRCLE,
+                scale,
+                fillColor: colorFor(p.score),
+                fillOpacity: 1,
+                strokeColor,
+                strokeWeight,
+              }}
+            />
+            {p.hasFreshReport && (
+              // Small blue badge offset to the upper-right of the main
+              // marker. Encoded as a separate <Marker> with a negative-x
+              // anchor so the badge floats off the parent without changing
+              // the parent icon's path. Tap is forwarded to the same court
+              // panel so the badge isn't a dead zone.
+              <Marker
+                position={{ lat: p.lat, lng: p.lng }}
+                clickable
+                onClick={() => onSelect(p.placeId)}
+                zIndex={(p.isSavedForSport ? 2 : 1) + 10}
+                icon={{
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 4,
+                  fillColor: '#3b82f6',
+                  fillOpacity: 1,
+                  strokeColor: '#fff',
+                  strokeWeight: 1.5,
+                  anchor: new google.maps.Point(-9, 9),
+                }}
+              />
+            )}
+          </Fragment>
         );
       })}
 

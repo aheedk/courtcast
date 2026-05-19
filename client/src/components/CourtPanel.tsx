@@ -11,6 +11,8 @@ import { PlayabilityBadge } from './PlayabilityBadge';
 import { WeatherStats } from './WeatherStats';
 import { RenameInput } from './RenameInput';
 import { AddToListMenu } from './AddToListMenu';
+import { LatestReport } from './LatestReport';
+import { ReportStatusForm } from './ReportStatusForm';
 
 interface Props {
   placeId: string;
@@ -136,10 +138,13 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
 
             <WeatherStats forecast={detail.data.forecast ?? null} />
 
+            <LatestReport placeId={placeId} />
+
             <div className="mt-6 flex flex-col gap-2">
+              {user && <ReportStatusForm placeId={placeId} />}
               {!user ? (
                 <p className="text-sm text-neutral-500">
-                  <a href="/login" className="text-good underline">Sign in</a> to save this court to your list.
+                  <a href="/login" className="text-good underline">Sign in</a> to save this court or report status.
                 </p>
               ) : (
                 <>
