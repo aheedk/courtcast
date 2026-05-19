@@ -33,17 +33,14 @@ Hard-coded enums. No free text, no admin UI to add values — adding/removing va
 | `two` | 2 |
 | `three_plus` | 3+ |
 
-**Conditions** (6 values):
+**Conditions** (3 values for MVP):
 | code | label |
 |---|---|
 | `dry` | Dry |
 | `little_wet` | Little wet |
-| `wet` | Wet |
-| `snow_ice` | Snow / ice |
-| `debris` | Debris |
 | `unplayable` | Unplayable |
 
-Both fields are required on submit. (Open question: shorter list? See "Open / deferred decisions" below.)
+Both fields are required on submit. `Unplayable` is the catch-all for snow, debris, damage, closed gate, etc. More granular options (wet, snow/ice, debris) can be added later if users ask.
 
 ## Data model — server
 
@@ -55,7 +52,7 @@ model CourtReport {
   placeId    String
   userId     String
   openCourts String   // 'none' | 'one' | 'two' | 'three_plus'
-  condition  String   // 'dry' | 'little_wet' | 'wet' | 'snow_ice' | 'debris' | 'unplayable'
+  condition  String   // 'dry' | 'little_wet' | 'unplayable'
   createdAt  DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -110,8 +107,7 @@ New shared type in `client/src/types.ts`:
 
 ```ts
 export type OpenCourts = 'none' | 'one' | 'two' | 'three_plus';
-export type CourtCondition =
-  | 'dry' | 'little_wet' | 'wet' | 'snow_ice' | 'debris' | 'unplayable';
+export type CourtCondition = 'dry' | 'little_wet' | 'unplayable';
 
 export interface CourtReport {
   openCourts: OpenCourts;
@@ -123,8 +119,7 @@ export const OPEN_COURTS_LABEL: Record<OpenCourts, string> = {
   none: 'None', one: '1', two: '2', three_plus: '3+',
 };
 export const CONDITION_LABEL: Record<CourtCondition, string> = {
-  dry: 'Dry', little_wet: 'Little wet', wet: 'Wet',
-  snow_ice: 'Snow / ice', debris: 'Debris', unplayable: 'Unplayable',
+  dry: 'Dry', little_wet: 'Little wet', unplayable: 'Unplayable',
 };
 ```
 
@@ -158,8 +153,7 @@ Layout (chip-style, two rows):
 
 ```
 Open courts:   [ None ]  [ 1 ]  [ 2 ]  [ 3+ ]
-Conditions:    [ Dry ]  [ Little wet ]  [ Wet ]
-               [ Snow / ice ]  [ Debris ]  [ Unplayable ]
+Conditions:    [ Dry ]  [ Little wet ]  [ Unplayable ]
                             [ Submit ]
 ```
 
@@ -297,7 +291,7 @@ The client has no test suite (per existing time-changer spec). Manual smoke-test
 
 ## Open / deferred decisions
 
-- **Condition list length.** Proposed 6 values. Could trim to a minimal 3 (`Dry`, `Little wet`, `Unplayable`) for the first release and add the rest as feedback arrives. Decision deferred to the implementation plan; revisit if the chip grid feels visually cramped on mobile.
+- **Condition list length.** Settled on 3 values for MVP. Add `Wet`, `Snow / ice`, `Debris` later if users ask. `Unplayable` is the catch-all today.
 - **Badge color encoding.** MVP uses one flat color (blue) for "has a report." Could later encode "freshly playable" (green) vs. "freshly unplayable" (red) directly on the pin. Adds a state-table to maintain and may conflict with the weather-based pin color. Defer.
 - **Section header copy.** Proposed: section is a `Report status` button that toggles to "Hide" once open. Plain enough. The displayed-report block carries an implicit label via its layout (the `Status` left-cell). No standalone heading.
 
