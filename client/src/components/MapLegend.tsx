@@ -1,24 +1,24 @@
 export function MapLegend() {
   return (
-    <div className="absolute top-32 right-3 z-20 bg-white/90 backdrop-blur rounded-xl shadow-md px-3 py-2 text-[11px] text-neutral-600 flex flex-col gap-1">
-      <div className="flex items-center gap-3">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-neutral-500" />
+    <div className="absolute bottom-28 left-3 z-20 bg-white/90 backdrop-blur rounded-lg shadow-md px-2 py-1.5 text-[10px] text-neutral-600 flex flex-col gap-0.5">
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1">
+          <span className="inline-block w-2 h-2 rounded-full bg-neutral-500" />
           unsaved
         </span>
-        <span className="flex items-center gap-1.5">
-          <span aria-hidden className="text-neutral-700">★</span>
+        <span className="flex items-center gap-1">
+          <span aria-hidden className="text-neutral-700 leading-none">★</span>
           saved
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-good" />
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-ok" />
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-bad" />
-        <span className="ml-1">playability</span>
-      </div>
       <div className="flex items-center gap-1.5">
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
+        <span className="inline-block w-2 h-2 rounded-full bg-good" />
+        <span className="inline-block w-2 h-2 rounded-full bg-ok" />
+        <span className="inline-block w-2 h-2 rounded-full bg-bad" />
+        <span className="ml-0.5">playability</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="inline-block w-2 h-2 rounded-full bg-blue-500" />
         <span>recent status report</span>
       </div>
     </div>

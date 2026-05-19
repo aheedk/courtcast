@@ -86,6 +86,15 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
               ) : (
                 <h3 className="font-bold text-base truncate min-w-0">{display}</h3>
               )}
+              {court.visibility === 'private' && (
+                <span
+                  className="text-xs shrink-0"
+                  title="Private — only you can see this"
+                  aria-label="Private"
+                >
+                  🔒
+                </span>
+              )}
             </div>
             {court.address && !renaming && (
               <p className="text-sm text-neutral-500 truncate ml-7">
@@ -98,11 +107,6 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
           </div>
 
           <div className="flex items-start gap-1 shrink-0">
-            {court.visibility === 'private' && (
-              <span className="inline-flex items-center font-semibold bg-neutral-100 text-neutral-600 text-xs px-2 py-1 rounded-md">
-                Private
-              </span>
-            )}
             {userScore && <PlayabilityBadge score={userScore} size="sm" />}
             <CardMenu items={menuItems} />
           </div>
