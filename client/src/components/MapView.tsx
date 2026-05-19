@@ -49,10 +49,19 @@ const STAR_PATH =
   'M 0,-1 L 0.294,-0.309 1.039,-0.309 0.445,0.118 0.618,0.809 0,0.45 -0.618,0.809 -0.445,0.118 -1.039,-0.309 -0.294,-0.309 Z';
 const STAR_HALF_EXTENT = 1.039;
 
-const BADGE_RADIUS = 4;
-const BADGE_STROKE = 1.5;
-const BADGE_EDGE_PAD = 1;
+// The "fresh report" badge sits at the dead center of the pin (on top
+// of the main shape), not floating off to a corner. The corner approach
+// always read as "drifting" because the offset between badge and main
+// shape only made sense at one zoom level — at others the eye expected
+// the badge to be tucked in tighter. Centered, the badge can't drift:
+// it shares the pin's lat/lng exactly.
+const BADGE_STROKE = 1;
 const BADGE_COLOR = '#3b82f6';
+function badgeRadiusFor(scale: number): number {
+  // Roughly a third of the pin radius so the playability fill is still
+  // visible as a ring around the badge.
+  return Math.max(2.5, scale * 0.35);
+}
 
 function colorFor(score: PlayabilityScore | null): string {
   return score ? COLOR[score] : GRAY;
@@ -80,12 +89,10 @@ function buildPinIcon(opts: {
 }): google.maps.Icon {
   const { isStar, scale, fillColor, strokeColor, strokeWeight, withBadge } = opts;
 
-  // How far the main shape reaches from its center (including stroke).
+  // Canvas just needs to fit the main shape; badge sits inside the
+  // shape's bounds so it doesn't add any overhang.
   const mainHalfExtent = (isStar ? STAR_HALF_EXTENT : 1) * scale + strokeWeight / 2;
-  // Extra room the badge needs past the main shape's bounding box.
-  const badgeOverhang = withBadge ? BADGE_RADIUS + BADGE_STROKE / 2 + BADGE_EDGE_PAD : 0;
-  const halfSize = mainHalfExtent + badgeOverhang;
-  const canvasSize = Math.ceil(halfSize * 2);
+  const canvasSize = Math.ceil(mainHalfExtent * 2 + 1); // +1 for stroke safety
   const cx = canvasSize / 2;
   const cy = canvasSize / 2;
 
@@ -94,7 +101,7 @@ function buildPinIcon(opts: {
     : `<circle cx="${cx}" cy="${cy}" r="${scale}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWeight}" />`;
 
   const badge = withBadge
-    ? `<circle cx="${canvasSize - BADGE_RADIUS - BADGE_EDGE_PAD}" cy="${BADGE_RADIUS + BADGE_EDGE_PAD}" r="${BADGE_RADIUS}" fill="${BADGE_COLOR}" stroke="#fff" stroke-width="${BADGE_STROKE}" />`
+    ? `<circle cx="${cx}" cy="${cy}" r="${badgeRadiusFor(scale)}" fill="${BADGE_COLOR}" stroke="#fff" stroke-width="${BADGE_STROKE}" />`
     : '';
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}">${mainShape}${badge}</svg>`;
