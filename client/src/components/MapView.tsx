@@ -21,6 +21,7 @@ interface Props {
   addMode?: boolean;
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   pendingPin?: { lat: number; lng: number } | null;
+  userLocation?: { lat: number; lng: number } | null;
 }
 
 const containerStyle = { width: '100%', height: '100%' };
@@ -102,6 +103,21 @@ function buildPinIcon(opts: {
   };
 }
 
+// Blue navigation arrow used as the "you are here" marker. Centered on
+// the captured lat/lng so the arrow's geometric center sits at the
+// user's position regardless of zoom.
+function buildLocateArrowIcon(): google.maps.Icon {
+  const size = 26;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
+    <path d="M12 2 L20 22 L12 17 L4 22 Z" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" />
+  </svg>`;
+  return {
+    url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    anchor: new google.maps.Point(size / 2, size / 2),
+    scaledSize: new google.maps.Size(size, size),
+  };
+}
+
 export function MapView({
   center,
   pins,
@@ -110,6 +126,7 @@ export function MapView({
   addMode = false,
   onMapClick,
   pendingPin,
+  userLocation,
 }: Props) {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-maps-script',
@@ -197,6 +214,15 @@ export function MapView({
             strokeWeight: 3,
           }}
           animation={google.maps.Animation.DROP}
+        />
+      )}
+
+      {userLocation && (
+        <Marker
+          position={userLocation}
+          title="You are here"
+          icon={buildLocateArrowIcon()}
+          zIndex={1000}
         />
       )}
     </GoogleMap>

@@ -42,6 +42,8 @@ export interface User {
   avatarUrl: string | null;
 }
 
+export type CourtVisibility = 'public' | 'private';
+
 export interface Court {
   placeId: string;
   name: string;
@@ -50,6 +52,7 @@ export interface Court {
   address: string | null;
   isCustom?: boolean;
   addedByUserId?: string | null;
+  visibility?: CourtVisibility;
   score?: PlayabilityScore | null;
   stale?: boolean;
   weather?: WeatherSummary | null;

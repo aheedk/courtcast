@@ -11,6 +11,7 @@ import type {
   CourtReport,
   OpenCourts,
   CourtCondition,
+  CourtVisibility,
 } from '../types';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -69,10 +70,22 @@ export const api = {
     return request<void>(`/api/me/courts/${placeId}${qs}`, { method: 'DELETE' });
   },
 
-  saveCustomCourt: (input: { lat: number; lng: number; name: string; sport: Sport }) =>
+  saveCustomCourt: (input: {
+    lat: number;
+    lng: number;
+    name: string;
+    sport: Sport;
+    visibility?: CourtVisibility;
+  }) =>
     request<{ court: SavedCourtDetail }>('/api/me/courts/custom', {
       method: 'POST',
       body: JSON.stringify(input),
+    }),
+
+  setCourtVisibility: (placeId: string, visibility: CourtVisibility) =>
+    request<{ court: Court }>(`/api/court/${placeId}/visibility`, {
+      method: 'PATCH',
+      body: JSON.stringify({ visibility }),
     }),
 
   renameSavedCourt: (placeId: string, sport: Sport, nickname: string | null) =>

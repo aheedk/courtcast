@@ -98,6 +98,11 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
           </div>
 
           <div className="flex items-start gap-1 shrink-0">
+            {court.visibility === 'private' && (
+              <span className="inline-flex items-center font-semibold bg-neutral-100 text-neutral-600 text-xs px-2 py-1 rounded-md">
+                Private
+              </span>
+            )}
             {userScore && <PlayabilityBadge score={userScore} size="sm" />}
             <CardMenu items={menuItems} />
           </div>

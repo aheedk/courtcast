@@ -18,6 +18,7 @@ import { AddSpotFab } from '../components/AddSpotFab';
 import { AddSpotSheet } from '../components/AddSpotSheet';
 import { MapLegend } from '../components/MapLegend';
 import { TimeScrubber } from '../components/TimeScrubber';
+import { LocateMeButton } from '../components/LocateMeButton';
 import type { User } from '../types';
 
 export function MapPage({ user }: { user: User | null }) {
@@ -35,6 +36,9 @@ export function MapPage({ user }: { user: User | null }) {
   const [keyword, setKeyword] = useState<string>('');
   const [addMode, setAddMode] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null);
+  // Captured GPS position from the locate-me button. Re-set on each tap;
+  // the marker stays at the captured spot when the map is panned away.
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const customEmpty = sport === 'custom' && !keyword.trim();
 
@@ -152,6 +156,7 @@ export function MapPage({ user }: { user: User | null }) {
         onSelect={selectCourt}
         addMode={addMode}
         pendingPin={pendingPin}
+        userLocation={userLocation}
         onMapClick={(loc) => setPendingPin(loc)}
       />
 
@@ -191,6 +196,13 @@ export function MapPage({ user }: { user: User | null }) {
         onCancel={() => {
           setAddMode(false);
           setPendingPin(null);
+        }}
+      />
+
+      <LocateMeButton
+        onLocate={(loc) => {
+          setUserLocation(loc);
+          setCenter(loc);
         }}
       />
 

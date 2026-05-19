@@ -14,10 +14,18 @@ interface Props {
 
 export function AddSpotSheet({ pin, sport, onClose, onSaved }: Props) {
   const [name, setName] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
   const qc = useQueryClient();
 
   const save = useMutation({
-    mutationFn: () => api.saveCustomCourt({ lat: pin.lat, lng: pin.lng, name: name.trim(), sport }),
+    mutationFn: () =>
+      api.saveCustomCourt({
+        lat: pin.lat,
+        lng: pin.lng,
+        name: name.trim(),
+        sport,
+        visibility: isPublic ? 'public' : 'private',
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.savedCourts });
       onSaved();
@@ -53,6 +61,21 @@ export function AddSpotSheet({ pin, sport, onClose, onSaved }: Props) {
       {save.isError && (
         <p className="mt-2 text-xs text-bad">Couldn't save. Try again.</p>
       )}
+
+      <label className="mt-4 flex items-start gap-3 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={isPublic}
+          onChange={(e) => setIsPublic(e.target.checked)}
+          className="mt-1 accent-good"
+        />
+        <span className="flex-1">
+          <span className="block text-sm font-semibold text-neutral-900">Make public</span>
+          <span className="block text-xs text-neutral-500 mt-0.5">
+            Other users can see this spot and post status reports.
+          </span>
+        </span>
+      </label>
 
       <div className="flex gap-2 mt-4">
         <button

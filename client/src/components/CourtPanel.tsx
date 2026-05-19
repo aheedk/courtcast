@@ -13,6 +13,7 @@ import { RenameInput } from './RenameInput';
 import { AddToListMenu } from './AddToListMenu';
 import { LatestReport } from './LatestReport';
 import { ReportStatusForm } from './ReportStatusForm';
+import { VisibilityPill } from './VisibilityPill';
 
 interface Props {
   placeId: string;
@@ -139,6 +140,16 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
             <WeatherStats forecast={detail.data.forecast ?? null} />
 
             <LatestReport placeId={placeId} />
+
+            {detail.data.court.isCustom &&
+              user &&
+              detail.data.court.addedByUserId === user.id &&
+              detail.data.court.visibility && (
+                <VisibilityPill
+                  placeId={placeId}
+                  visibility={detail.data.court.visibility}
+                />
+              )}
 
             <div className="mt-6 flex flex-col gap-2">
               {user && <ReportStatusForm placeId={placeId} />}
