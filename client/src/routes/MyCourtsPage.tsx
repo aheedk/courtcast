@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { SavedCourtCard } from '../components/SavedCourtCard';
 import { CourtPanel } from '../components/CourtPanel';
-import { TimePill } from '../components/TimePill';
 import { TimeScrubber } from '../components/TimeScrubber';
 import { ListsTab } from '../components/ListsTab';
 import { ListView } from '../components/ListView';
@@ -22,7 +21,6 @@ export function MyCourtsPage({ user }: { user: User }) {
   const [enabledSports] = useEnabledSports();
   const [tab, setTab] = useState<TabValue>('all');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
-  const [timeSheetOpen, setTimeSheetOpen] = useState(false);
 
   const allCourts = saved.data?.courts ?? [];
   const filtered =
@@ -33,15 +31,23 @@ export function MyCourtsPage({ user }: { user: User }) {
     ...enabledSports.map((s) => ({ value: s as TabValue, label: `${SPORT_EMOJI[s]} ${SPORT_LABEL[s]}` })),
   ];
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-6 overflow-x-hidden">
-      <h1 className="text-2xl font-bold mb-4">My Courts</h1>
+  // One batch query for the latest report on every saved court. Lets each
+  // card read from the shared cache instead of each firing its own request.
+  const savedPlaceIds = useMemo(
+    () => Array.from(new Set(allCourts.map((c) => c.placeId))),
+    [allCourts],
+  );
+  const reports = useQuery({
+    queryKey: queryKeys.courtReportsBatch(savedPlaceIds),
+    queryFn: () => api.courtReportsBatch(savedPlaceIds),
+    enabled: savedPlaceIds.length > 0,
+    staleTime: 60_000,
+  });
+  const reportMap = reports.data?.reports ?? {};
 
-      {allCourts.length > 0 && (
-        <div className="mb-3">
-          <TimePill onTap={() => setTimeSheetOpen(true)} />
-        </div>
-      )}
+  return (
+    <div className="max-w-3xl mx-auto px-4 pt-6 pb-24 overflow-x-hidden">
+      <h1 className="text-2xl font-bold mb-4">My Courts</h1>
 
       <div className="flex gap-2 overflow-x-auto pb-1 mb-5 -mx-1 px-1">
         {tabs.map((t) => {
@@ -113,6 +119,7 @@ export function MyCourtsPage({ user }: { user: User }) {
                   key={`${c.placeId}:${c.sport}`}
                   court={c}
                   onSelect={selectCourt}
+                  report={reports.isSuccess ? (reportMap[c.placeId] ?? null) : undefined}
                 />
               ))}
             </div>
@@ -128,27 +135,11 @@ export function MyCourtsPage({ user }: { user: User }) {
         />
       )}
 
-      {timeSheetOpen && (
-        <div
-          className="fixed inset-0 z-30"
-          onClick={() => setTimeSheetOpen(false)}
-        >
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl p-4 sm:max-w-md sm:left-1/2 sm:-translate-x-1/2 sm:bottom-4 sm:rounded-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-neutral-900">Pick a time</h3>
-              <button
-                onClick={() => setTimeSheetOpen(false)}
-                aria-label="Close"
-                className="text-neutral-400 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <TimeScrubber />
-          </div>
+      {/* Persistent time slider, mirroring the MapPage layout — hidden
+          while the CourtPanel is open so it doesn't overlap. */}
+      {allCourts.length > 0 && !selectedPlaceId && (
+        <div className="fixed bottom-3 left-3 right-3 z-20 sm:max-w-3xl sm:left-1/2 sm:-translate-x-1/2 pointer-events-auto">
+          <TimeScrubber />
         </div>
       )}
     </div>
