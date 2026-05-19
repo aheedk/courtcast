@@ -14,6 +14,7 @@ import playabilityRouter from './routes/playability';
 import courtRouter from './routes/court';
 import meCourtsRouter from './routes/meCourts';
 import meListsRouter from './routes/meLists';
+import reportsRouter from './routes/reports';
 
 export function createApp() {
   const app = express();
@@ -43,6 +44,7 @@ export function createApp() {
   app.use('/api/court', courtRouter);
   app.use('/api/me/courts', meCourtsRouter);
   app.use('/api/me/lists', meListsRouter);
+  app.use('/api/places', reportsRouter);
 
   // In production, serve the built Vite client from the same origin so we
   // don't need a separate static host (Netlify) or CORS at all. The build
