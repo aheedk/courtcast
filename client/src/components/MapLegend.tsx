@@ -18,7 +18,7 @@ export function MapLegend() {
         <span className="ml-1">playability</span>
       </div>
       <div className="flex items-center gap-1.5">
-        <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ring-1 ring-white" />
+        <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
         <span>recent status report</span>
       </div>
     </div>

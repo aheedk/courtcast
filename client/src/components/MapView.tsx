@@ -49,19 +49,12 @@ const STAR_PATH =
   'M 0,-1 L 0.294,-0.309 1.039,-0.309 0.445,0.118 0.618,0.809 0,0.45 -0.618,0.809 -0.445,0.118 -1.039,-0.309 -0.294,-0.309 Z';
 const STAR_HALF_EXTENT = 1.039;
 
-// The "fresh report" badge sits at the dead center of the pin (on top
-// of the main shape), not floating off to a corner. The corner approach
-// always read as "drifting" because the offset between badge and main
-// shape only made sense at one zoom level — at others the eye expected
-// the badge to be tucked in tighter. Centered, the badge can't drift:
-// it shares the pin's lat/lng exactly.
-const BADGE_STROKE = 1;
-const BADGE_COLOR = '#3b82f6';
-function badgeRadiusFor(scale: number): number {
-  // Roughly a third of the pin radius so the playability fill is still
-  // visible as a ring around the badge.
-  return Math.max(2.5, scale * 0.35);
-}
+// A pin with a fresh community status report fills BLUE instead of its
+// playability color (green/yellow/red/gray). The status report is the
+// stronger near-term signal — someone just looked at the courts — so
+// it overrides the model-derived playability for the pin color. The
+// underlying playability is still visible by tapping the pin.
+const REPORTED_FILL_COLOR = '#3b82f6';
 
 function colorFor(score: PlayabilityScore | null): string {
   return score ? COLOR[score] : GRAY;
@@ -85,26 +78,22 @@ function buildPinIcon(opts: {
   fillColor: string;
   strokeColor: string;
   strokeWeight: number;
-  withBadge: boolean;
+  isReported: boolean;
 }): google.maps.Icon {
-  const { isStar, scale, fillColor, strokeColor, strokeWeight, withBadge } = opts;
+  const { isStar, scale, fillColor, strokeColor, strokeWeight, isReported } = opts;
 
-  // Canvas just needs to fit the main shape; badge sits inside the
-  // shape's bounds so it doesn't add any overhang.
+  const effectiveFill = isReported ? REPORTED_FILL_COLOR : fillColor;
+
   const mainHalfExtent = (isStar ? STAR_HALF_EXTENT : 1) * scale + strokeWeight / 2;
   const canvasSize = Math.ceil(mainHalfExtent * 2 + 1); // +1 for stroke safety
   const cx = canvasSize / 2;
   const cy = canvasSize / 2;
 
   const mainShape = isStar
-    ? `<path d="${STAR_PATH}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWeight}" stroke-linejoin="round" vector-effect="non-scaling-stroke" transform="translate(${cx} ${cy}) scale(${scale})" />`
-    : `<circle cx="${cx}" cy="${cy}" r="${scale}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWeight}" />`;
+    ? `<path d="${STAR_PATH}" fill="${effectiveFill}" stroke="${strokeColor}" stroke-width="${strokeWeight}" stroke-linejoin="round" vector-effect="non-scaling-stroke" transform="translate(${cx} ${cy}) scale(${scale})" />`
+    : `<circle cx="${cx}" cy="${cy}" r="${scale}" fill="${effectiveFill}" stroke="${strokeColor}" stroke-width="${strokeWeight}" />`;
 
-  const badge = withBadge
-    ? `<circle cx="${cx}" cy="${cy}" r="${badgeRadiusFor(scale)}" fill="${BADGE_COLOR}" stroke="#fff" stroke-width="${BADGE_STROKE}" />`
-    : '';
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}">${mainShape}${badge}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}">${mainShape}</svg>`;
 
   return {
     url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
@@ -190,7 +179,7 @@ export function MapView({
               fillColor: colorFor(p.score),
               strokeColor,
               strokeWeight,
-              withBadge: !!p.hasFreshReport,
+              isReported: !!p.hasFreshReport,
             })}
           />
         );
