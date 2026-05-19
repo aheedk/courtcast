@@ -8,7 +8,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useThresholds } from '../stores/thresholds';
 import { useEnabledSports } from '../stores/enabledSports';
 import { useSelectedTime } from '../stores/selectedTime';
-import { slotAt } from '../lib/forecast';
+import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
 import { scoreFromThresholds } from '../lib/playability';
 import { MapView, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
@@ -79,8 +79,13 @@ export function MapPage({ user }: { user: User | null }) {
   function scorePin(forecast: typeof placesPins[number]['forecast'] | null, fallback: typeof placesPins[number]['score'] | null = null) {
     const slot = slotAt(forecast ?? null, selectedMs);
     if (slot) {
+      // For slider-selected times, score against the max rain over the
+      // 2-hour bucket so pin colors match what the panel/cards display.
+      const rainPctNext2h = selectedMs !== null
+        ? (rainPctOverWindow(forecast ?? null, selectedMs, SLIDER_STEP_HOURS) ?? slot.rainPct)
+        : slot.rainPct;
       return scoreFromThresholds(
-        { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
+        { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h },
         thresholds,
       );
     }

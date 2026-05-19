@@ -1,5 +1,5 @@
 import type { Forecast } from '../types';
-import { slotAt } from '../lib/forecast';
+import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
 import { useSelectedTime } from '../stores/selectedTime';
 
 interface Props {
@@ -10,6 +10,12 @@ interface Props {
 export function WeatherStats({ forecast, compact = false }: Props) {
   const [selectedMs] = useSelectedTime();
   const slot = slotAt(forecast, selectedMs);
+  // For slider-selected times, report the max rain over the 2-hour bucket
+  // the user picked. Now stays single-hour — "current rain chance" stays
+  // a point sample.
+  const rainPct = selectedMs !== null
+    ? (rainPctOverWindow(forecast, selectedMs, SLIDER_STEP_HOURS) ?? slot?.rainPct ?? null)
+    : (slot?.rainPct ?? null);
 
   const stat = (label: string, value: string) => (
     <div className="flex flex-col">
@@ -32,7 +38,7 @@ export function WeatherStats({ forecast, compact = false }: Props) {
     <div className={`grid grid-cols-3 gap-4 ${compact ? '' : 'mt-2'}`}>
       {stat('Temp', `${slot.tempF}°F`)}
       {stat('Wind', `${slot.windMph} mph`)}
-      {stat('Rain', `${slot.rainPct}%`)}
+      {stat('Rain', `${rainPct ?? slot.rainPct}%`)}
     </div>
   );
 }

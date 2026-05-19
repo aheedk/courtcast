@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useSelectedTime } from '../stores/selectedTime';
+import { SLIDER_STEP_HOURS } from '../lib/forecast';
 
-const STEP_HOURS = 2;
+const STEP_HOURS = SLIDER_STEP_HOURS;
 const TOTAL_HOURS = 48;
 const NUM_BUCKETS = TOTAL_HOURS / STEP_HOURS; // 24
 

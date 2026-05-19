@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { Forecast, PlayabilityScore, Sport } from '../types';
-import { slotAt } from '../lib/forecast';
+import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
 import { useSelectedTime } from './selectedTime';
 import { SPORTS } from '../types';
 import { DEFAULT_THRESHOLDS, scoreFromThresholds, type Thresholds } from '../lib/playability';
@@ -89,8 +89,13 @@ export function useScoreFor(
   const [selectedMs] = useSelectedTime();
   const slot = slotAt(forecast, selectedMs);
   if (slot) {
+    // For slider-selected times, score against the max rain over the
+    // 2-hour bucket the user picked. Now stays single-hour.
+    const rainPctNext2h = selectedMs !== null
+      ? (rainPctOverWindow(forecast, selectedMs, SLIDER_STEP_HOURS) ?? slot.rainPct)
+      : slot.rainPct;
     return scoreFromThresholds(
-      { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h: slot.rainPct },
+      { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h },
       t,
     );
   }
