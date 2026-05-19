@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import type { PlayabilityScore } from '../types';
 import { env } from '../lib/env';
@@ -41,14 +41,69 @@ const COLOR: Record<PlayabilityScore, string> = {
 };
 const GRAY = '#737373';
 
-// 5-point star path in unit space (outer radius = 1). With Google
-// Maps Symbol `scale`, this matches CIRCLE's "scale = radius in px"
-// convention so circles and stars sit at comparable visual weights.
+// 5-point star path in unit space (outer radius = 1). Used both as a
+// Google Maps Symbol path and as the inner path of the composite SVG
+// icon. Star path extent is ~1.039 (the points), so callers need to
+// pad the SVG canvas accordingly.
 const STAR_PATH =
   'M 0,-1 L 0.294,-0.309 1.039,-0.309 0.445,0.118 0.618,0.809 0,0.45 -0.618,0.809 -0.445,0.118 -1.039,-0.309 -0.294,-0.309 Z';
+const STAR_HALF_EXTENT = 1.039;
+
+const BADGE_RADIUS = 4;
+const BADGE_STROKE = 1.5;
+const BADGE_EDGE_PAD = 1;
+const BADGE_COLOR = '#3b82f6';
 
 function colorFor(score: PlayabilityScore | null): string {
   return score ? COLOR[score] : GRAY;
+}
+
+/**
+ * Builds the pin icon as a single inline SVG. Encoding the playability
+ * shape and the "has report" badge in the same image guarantees they
+ * always render at the exact same screen pixel — the previous two-marker
+ * approach used a Symbol anchor for the badge, which drifted away from
+ * the parent pin at different zoom levels because Google's Symbol anchor
+ * is interpreted in path coordinates (not pixels) and then re-scaled.
+ *
+ * Canvas is sized to fit the main shape centered plus enough overhang in
+ * the upper-right corner for the badge. Anchor is the canvas center, so
+ * the main shape lands exactly on the lat/lng regardless of badge state.
+ */
+function buildPinIcon(opts: {
+  isStar: boolean;
+  scale: number;
+  fillColor: string;
+  strokeColor: string;
+  strokeWeight: number;
+  withBadge: boolean;
+}): google.maps.Icon {
+  const { isStar, scale, fillColor, strokeColor, strokeWeight, withBadge } = opts;
+
+  // How far the main shape reaches from its center (including stroke).
+  const mainHalfExtent = (isStar ? STAR_HALF_EXTENT : 1) * scale + strokeWeight / 2;
+  // Extra room the badge needs past the main shape's bounding box.
+  const badgeOverhang = withBadge ? BADGE_RADIUS + BADGE_STROKE / 2 + BADGE_EDGE_PAD : 0;
+  const halfSize = mainHalfExtent + badgeOverhang;
+  const canvasSize = Math.ceil(halfSize * 2);
+  const cx = canvasSize / 2;
+  const cy = canvasSize / 2;
+
+  const mainShape = isStar
+    ? `<path d="${STAR_PATH}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWeight}" stroke-linejoin="round" vector-effect="non-scaling-stroke" transform="translate(${cx} ${cy}) scale(${scale})" />`
+    : `<circle cx="${cx}" cy="${cy}" r="${scale}" fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokeWeight}" />`;
+
+  const badge = withBadge
+    ? `<circle cx="${canvasSize - BADGE_RADIUS - BADGE_EDGE_PAD}" cy="${BADGE_RADIUS + BADGE_EDGE_PAD}" r="${BADGE_RADIUS}" fill="${BADGE_COLOR}" stroke="#fff" stroke-width="${BADGE_STROKE}" />`
+    : '';
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}">${mainShape}${badge}</svg>`;
+
+  return {
+    url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    anchor: new google.maps.Point(cx, cy),
+    scaledSize: new google.maps.Size(canvasSize, canvasSize),
+  };
 }
 
 export function MapView({
@@ -116,44 +171,21 @@ export function MapView({
         const strokeColor = p.isSavedForSport ? '#171717' : '#fff';
         const strokeWeight = isSelected ? (p.isSavedForSport ? 2.5 : 3) : (p.isSavedForSport ? 1.75 : 2);
         return (
-          <Fragment key={p.placeId}>
-            <Marker
-              position={{ lat: p.lat, lng: p.lng }}
-              title={p.name}
-              onClick={() => onSelect(p.placeId)}
-              zIndex={p.isSavedForSport ? 2 : 1}
-              icon={{
-                path: p.isSavedForSport ? STAR_PATH : google.maps.SymbolPath.CIRCLE,
-                scale,
-                fillColor: colorFor(p.score),
-                fillOpacity: 1,
-                strokeColor,
-                strokeWeight,
-              }}
-            />
-            {p.hasFreshReport && (
-              // Small blue badge offset to the upper-right of the main
-              // marker. Encoded as a separate <Marker> with a negative-x
-              // anchor so the badge floats off the parent without changing
-              // the parent icon's path. Tap is forwarded to the same court
-              // panel so the badge isn't a dead zone.
-              <Marker
-                position={{ lat: p.lat, lng: p.lng }}
-                clickable
-                onClick={() => onSelect(p.placeId)}
-                zIndex={(p.isSavedForSport ? 2 : 1) + 10}
-                icon={{
-                  path: google.maps.SymbolPath.CIRCLE,
-                  scale: 4,
-                  fillColor: '#3b82f6',
-                  fillOpacity: 1,
-                  strokeColor: '#fff',
-                  strokeWeight: 1.5,
-                  anchor: new google.maps.Point(-9, 9),
-                }}
-              />
-            )}
-          </Fragment>
+          <Marker
+            key={p.placeId}
+            position={{ lat: p.lat, lng: p.lng }}
+            title={p.name}
+            onClick={() => onSelect(p.placeId)}
+            zIndex={p.isSavedForSport ? 2 : 1}
+            icon={buildPinIcon({
+              isStar: p.isSavedForSport,
+              scale,
+              fillColor: colorFor(p.score),
+              strokeColor,
+              strokeWeight,
+              withBadge: !!p.hasFreshReport,
+            })}
+          />
         );
       })}
 
