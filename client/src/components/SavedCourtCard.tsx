@@ -11,7 +11,6 @@ import { WeatherStats } from './WeatherStats';
 import { CardMenu } from './CardMenu';
 import { RenameInput } from './RenameInput';
 import { AddToListMenu } from './AddToListMenu';
-import { LatestReport } from './LatestReport';
 import type { CourtReport } from '../types';
 
 interface Props {
@@ -106,15 +105,28 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
 
         {court.forecast ? (
           <div className="mt-3">
-            <WeatherStats forecast={court.forecast ?? null} compact />
+            <WeatherStats
+              forecast={court.forecast ?? null}
+              compact
+              report={report ?? null}
+            />
           </div>
         ) : (
           <p className="mt-3 text-sm text-neutral-500">Weather unavailable right now.</p>
         )}
 
-        <div className="mt-2">
-          <LatestReport placeId={court.placeId} report={report} compact />
-        </div>
+        <button
+          type="button"
+          onClick={(e) => {
+            // Card's own onClick opens the detail panel; the report
+            // button should land directly on the form instead.
+            e.stopPropagation();
+            selectCourtAndReport(court.placeId);
+          }}
+          className="mt-3 w-full py-2 rounded-xl border border-neutral-300 text-neutral-700 text-sm font-semibold hover:bg-neutral-50"
+        >
+          {report ? 'Update status' : 'Report status'}
+        </button>
       </div>
 
       {addingToList && (
