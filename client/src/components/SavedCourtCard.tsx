@@ -68,7 +68,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
     <>
       <div
         onClick={() => !renaming && onSelect(court.placeId)}
-        className="cursor-pointer w-full bg-white border border-neutral-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
+        className="cursor-pointer w-full max-w-full overflow-x-clip bg-white border border-neutral-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">

@@ -71,7 +71,7 @@ export function TimeScrubber() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg px-4 py-3 border border-neutral-200">
+    <div className="bg-white rounded-2xl shadow-lg px-4 py-3 border border-neutral-200 max-w-full overflow-x-clip">
       <div className="flex items-center justify-between mb-2">
         <div className="leading-tight">
           <div className="text-sm font-bold text-neutral-900">{readout.primary}</div>
