@@ -70,7 +70,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
         onClick={() => !renaming && onSelect(court.placeId)}
         className="cursor-pointer w-full max-w-full overflow-x-clip bg-white border border-neutral-200 rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-base shrink-0" aria-label={court.sport}>
@@ -97,17 +97,21 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
               )}
             </div>
             {court.address && !renaming && (
-              <p className="text-sm text-neutral-500 truncate ml-7">
+              <p className="text-sm text-neutral-500 break-words ml-7">
                 {court.nickname && (
                   <span className="text-xs italic mr-2">({court.name})</span>
                 )}
                 {court.address}
               </p>
             )}
+            {userScore && (
+              <div className="ml-7 mt-2">
+                <PlayabilityBadge score={userScore} size="sm" />
+              </div>
+            )}
           </div>
 
-          <div className="flex items-start gap-1 shrink-0">
-            {userScore && <PlayabilityBadge score={userScore} size="sm" />}
+          <div className="flex items-start shrink-0">
             <CardMenu items={menuItems} />
           </div>
         </div>
