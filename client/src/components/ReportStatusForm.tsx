@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
+import { useUi } from '../stores/ui';
 import type { OpenCourts, CourtCondition, CourtReport } from '../types';
 import {
   OPEN_COURTS_VALUES,
@@ -41,10 +42,21 @@ function Chip({
 
 export function ReportStatusForm({ placeId }: Props) {
   const qc = useQueryClient();
+  const autoOpenForId = useUi((s) => s.autoOpenReportForId);
+  const consumeAutoOpen = useUi((s) => s.consumeAutoOpenReport);
   const [open, setOpen] = useState(false);
   const [openCourts, setOpenCourts] = useState<OpenCourts | null>(null);
   const [condition, setCondition] = useState<CourtCondition | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // If the panel was opened with "Report status" from a card menu, expand
+  // the form on mount and clear the one-shot flag so it doesn't fire again.
+  useEffect(() => {
+    if (autoOpenForId === placeId) {
+      setOpen(true);
+      consumeAutoOpen();
+    }
+  }, [autoOpenForId, placeId, consumeAutoOpen]);
 
   const submit = useMutation({
     mutationFn: () => {

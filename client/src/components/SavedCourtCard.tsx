@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { useScoreFor } from '../stores/thresholds';
+import { useUi } from '../stores/ui';
 import type { SavedCourtDetail } from '../types';
 import { SPORT_EMOJI } from '../types';
 import { PlayabilityBadge } from './PlayabilityBadge';
@@ -26,6 +27,7 @@ interface Props {
 
 export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Props) {
   const qc = useQueryClient();
+  const selectCourtAndReport = useUi((s) => s.selectCourtAndReport);
   const [renaming, setRenaming] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
 
@@ -50,9 +52,14 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
   const display = court.nickname || court.name;
   const userScore = useScoreFor(court.forecast ?? null, court.sport, court.score);
 
+  // Mirror the CourtPanel button set so users can act on a card without
+  // opening the panel first. "Report status" opens the panel with the
+  // form already expanded — the form lives in the panel, not the card,
+  // because it needs the surrounding weather context to be useful.
   const menuItems = [
-    { label: 'Rename', onSelect: () => setRenaming(true) },
+    { label: 'Report status', onSelect: () => selectCourtAndReport(court.placeId) },
     { label: 'Add to list', onSelect: () => setAddingToList(true) },
+    { label: 'Rename', onSelect: () => setRenaming(true) },
     listScopedRemove
       ? { label: 'Remove from this list', onSelect: listScopedRemove, destructive: true }
       : { label: `Remove from ${SPORT_EMOJI[court.sport]}`, onSelect: () => unsave.mutate(), destructive: true },
