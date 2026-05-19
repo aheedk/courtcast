@@ -74,6 +74,31 @@ export interface Forecast {
   fetchedAt: number;
 }
 
+export type OpenCourts = 'none' | 'one' | 'two' | 'three_plus';
+export type CourtCondition = 'dry' | 'little_wet' | 'unplayable';
+
+export const OPEN_COURTS_VALUES: readonly OpenCourts[] = ['none', 'one', 'two', 'three_plus'] as const;
+export const CONDITION_VALUES: readonly CourtCondition[] = ['dry', 'little_wet', 'unplayable'] as const;
+
+export const OPEN_COURTS_LABEL: Record<OpenCourts, string> = {
+  none: 'None',
+  one: '1',
+  two: '2',
+  three_plus: '3+',
+};
+
+export const CONDITION_LABEL: Record<CourtCondition, string> = {
+  dry: 'Dry',
+  little_wet: 'Little wet',
+  unplayable: 'Unplayable',
+};
+
+export interface CourtReport {
+  openCourts: OpenCourts;
+  condition: CourtCondition;
+  createdAt: string; // ISO8601 from server
+}
+
 export interface SavedCourtDetail extends Court {
   savedAt: string;
   sport: Sport;

@@ -1,4 +1,17 @@
-import type { Court, CourtDetail, SavedCourtDetail, User, WeatherSummary, PlayabilityScore, Sport, ListSummary, ListDetail } from '../types';
+import type {
+  Court,
+  CourtDetail,
+  SavedCourtDetail,
+  User,
+  WeatherSummary,
+  PlayabilityScore,
+  Sport,
+  ListSummary,
+  ListDetail,
+  CourtReport,
+  OpenCourts,
+  CourtCondition,
+} from '../types';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(path, {
@@ -88,4 +101,19 @@ export const api = {
     ),
   removeFromList: (listId: string, placeId: string, sport: Sport) =>
     request<void>(`/api/me/lists/${listId}/members/${placeId}/${sport}`, { method: 'DELETE' }),
+
+  courtReport: (placeId: string) =>
+    request<CourtReport | undefined>(`/api/places/${placeId}/report`),
+
+  submitCourtReport: (placeId: string, input: { openCourts: OpenCourts; condition: CourtCondition }) =>
+    request<CourtReport>(`/api/places/${placeId}/reports`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  courtReportsBatch: (placeIds: string[]) =>
+    request<{ reports: Record<string, CourtReport | null> }>(`/api/places/reports/batch`, {
+      method: 'POST',
+      body: JSON.stringify({ placeIds }),
+    }),
 };

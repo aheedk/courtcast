@@ -19,6 +19,11 @@ export const queryKeys = {
   savedCourts: ['savedCourts'] as const,
   lists: ['lists'] as const,
   list: (id: string) => ['lists', id] as const,
+  courtReport: (placeId: string) => ['courtReport', placeId] as const,
+  // Sorted-join key so two arrays with the same ids in different order
+  // share the same cache entry.
+  courtReportsBatch: (placeIds: string[]) =>
+    ['courtReportsBatch', [...placeIds].sort().join(',')] as const,
 };
 
 function round(n: number) {
