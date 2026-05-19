@@ -6,6 +6,17 @@ html, body, #root {
   height: 100%;
 }
 
+/* Belt-and-suspenders horizontal-overflow cap. Individual pages already
+ * clip with their own overflow-x-hidden, but when something briefly
+ * overflows during render iOS Safari turns the body into a horizontal
+ * scroll container — and any fixed-positioned children (the time
+ * slider, panels) then measure `right`/`left` from the body's extended
+ * edge, not the visible viewport edge, so they drift off-screen. Locking
+ * overflow-x at the root keeps the viewport the containing block. */
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
 }
