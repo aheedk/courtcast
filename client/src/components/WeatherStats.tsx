@@ -27,7 +27,11 @@ export function WeatherStats({ forecast, compact = false, report = null }: Props
     ? (rainPctOverWindow(forecast, selectedMs, SLIDER_STEP_HOURS) ?? slot?.rainPct ?? null)
     : (slot?.rainPct ?? null);
 
-  const cols = report ? 'grid-cols-4' : 'grid-cols-3';
+  // 3 weather columns; Status (when present) joins as a 4th column on
+  // tablet+, but on phones drops to its own full-width row below so the
+  // value ("3+ · Little wet") doesn't have to truncate. Same applies to
+  // the gap — tighter when 4 cells share a row.
+  const cols = report ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-3';
   const gap = report ? 'gap-3' : 'gap-4';
 
   const stat = (label: string, value: string, secondary?: string) => (
@@ -46,18 +50,23 @@ export function WeatherStats({ forecast, compact = false, report = null }: Props
     </div>
   );
 
+  const statusCell = report && (
+    <div className="col-span-3 sm:col-span-1">
+      {stat(
+        'Status',
+        `${OPEN_COURTS_LABEL[report.openCourts]} · ${CONDITION_LABEL[report.condition]}`,
+        relativeTime(report.createdAt),
+      )}
+    </div>
+  );
+
   if (!slot) {
     return (
       <div className={`grid ${cols} ${gap} ${compact ? '' : 'mt-2'}`}>
         {stat('Temp', '—')}
         {stat('Wind', '—')}
         {stat('Rain', '—')}
-        {report &&
-          stat(
-            'Status',
-            `${OPEN_COURTS_LABEL[report.openCourts]} · ${CONDITION_LABEL[report.condition]}`,
-            relativeTime(report.createdAt),
-          )}
+        {statusCell}
       </div>
     );
   }
@@ -67,12 +76,7 @@ export function WeatherStats({ forecast, compact = false, report = null }: Props
       {stat('Temp', `${slot.tempF}°F`)}
       {stat('Wind', `${slot.windMph} mph`)}
       {stat('Rain', `${rainPct ?? slot.rainPct}%`)}
-      {report &&
-        stat(
-          'Status',
-          `${OPEN_COURTS_LABEL[report.openCourts]} · ${CONDITION_LABEL[report.condition]}`,
-          relativeTime(report.createdAt),
-        )}
+      {statusCell}
     </div>
   );
 }
