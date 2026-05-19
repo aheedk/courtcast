@@ -11,7 +11,7 @@ process.env.OPENWEATHER_KEY ||= 'test-weather-key';
 // test can shape its own return value.
 const prismaMock = {
   session: { findUnique: vi.fn() },
-  court: { findUnique: vi.fn() },
+  court: { findUnique: vi.fn(), findMany: vi.fn() },
   courtReport: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
@@ -38,8 +38,17 @@ function authedSession() {
   });
 }
 
-function courtExists() {
-  prismaMock.court.findUnique.mockResolvedValue({ placeId: PLACE_ID, name: 'Park', lat: 40, lng: -74 });
+function courtExists(extra: Partial<{ visibility: string; isCustom: boolean; addedByUserId: string | null }> = {}) {
+  prismaMock.court.findUnique.mockResolvedValue({
+    placeId: PLACE_ID,
+    name: 'Park',
+    lat: 40,
+    lng: -74,
+    visibility: 'public',
+    isCustom: false,
+    addedByUserId: null,
+    ...extra,
+  });
 }
 
 beforeAll(async () => {
@@ -187,6 +196,7 @@ describe('POST /api/places/:placeId/reports', () => {
 
 describe('GET /api/places/:placeId/report', () => {
   it('returns the latest report when one exists within the 24h window', async () => {
+    courtExists();
     prismaMock.courtReport.findFirst.mockResolvedValue({
       openCourts: 'two',
       condition: 'dry',
@@ -207,14 +217,38 @@ describe('GET /api/places/:placeId/report', () => {
   });
 
   it('204 when no fresh report exists', async () => {
+    courtExists();
     prismaMock.courtReport.findFirst.mockResolvedValue(null);
     const res = await request(app).get(`/api/places/${PLACE_ID}/report`);
     expect(res.status).toBe(204);
+  });
+
+  it('204 when the court is private and the caller is not the owner', async () => {
+    // No session → anonymous caller.
+    prismaMock.session.findUnique.mockResolvedValue(null);
+    prismaMock.court.findUnique.mockResolvedValue({
+      placeId: PLACE_ID,
+      visibility: 'private',
+      isCustom: true,
+      addedByUserId: 'someone-else',
+      name: 'Hidden',
+      lat: 0,
+      lng: 0,
+    });
+    const res = await request(app).get(`/api/places/${PLACE_ID}/report`);
+    expect(res.status).toBe(204);
+    // The report findFirst should not have been called — visibility check
+    // short-circuits before the DB hit.
+    expect(prismaMock.courtReport.findFirst).not.toHaveBeenCalled();
   });
 });
 
 describe('POST /api/places/reports/batch', () => {
   it('returns a record of placeId → latest report or null for each requested id', async () => {
+    // All three places are public/visible.
+    prismaMock.court.findMany.mockResolvedValue([
+      { placeId: 'p1' }, { placeId: 'p2' }, { placeId: 'p3' },
+    ]);
     prismaMock.courtReport.findMany.mockResolvedValue([
       {
         placeId: 'p1',
@@ -261,5 +295,29 @@ describe('POST /api/places/reports/batch', () => {
     const placeIds = Array.from({ length: 51 }, (_, i) => `p${i}`);
     const res = await request(app).post('/api/places/reports/batch').send({ placeIds });
     expect(res.status).toBe(400);
+  });
+
+  it('hides private courts from non-owners (key present, value null)', async () => {
+    // Only p1 is visible to the anonymous caller; p2 is private to someone else.
+    prismaMock.session.findUnique.mockResolvedValue(null);
+    prismaMock.court.findMany.mockResolvedValue([{ placeId: 'p1' }]);
+    prismaMock.courtReport.findMany.mockResolvedValue([
+      {
+        placeId: 'p1',
+        openCourts: 'one',
+        condition: 'dry',
+        createdAt: new Date('2026-05-18T11:00:00Z'),
+      },
+    ]);
+
+    const res = await request(app)
+      .post('/api/places/reports/batch')
+      .send({ placeIds: ['p1', 'p2'] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.reports).toEqual({
+      p1: { openCourts: 'one', condition: 'dry', createdAt: '2026-05-18T11:00:00.000Z' },
+      p2: null,
+    });
   });
 });

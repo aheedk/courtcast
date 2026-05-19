@@ -6,6 +6,7 @@ import { fetchForecast } from '../lib/weather';
 import { weatherFromForecast } from '../lib/forecast';
 import { score } from '../lib/playability';
 import { SPORTS } from '../lib/sport';
+import { canSeeCourt } from '../lib/visibility';
 
 const router = Router();
 
@@ -67,7 +68,7 @@ router.post('/', async (req, res, next) => {
     const { placeId, sport } = addSchema.parse(req.body);
 
     const court = await prisma.court.findUnique({ where: { placeId } });
-    if (!court) {
+    if (!court || !canSeeCourt(court, req.user!.id)) {
       return res.status(404).json({
         error: { code: 'COURT_UNKNOWN', message: 'Court not seen yet — open it on the map first' },
       });
@@ -92,18 +93,27 @@ const customSchema = z.object({
   lng: z.coerce.number().gte(-180).lte(180),
   name: z.string().trim().min(1).max(80),
   sport: sportEnum,
+  visibility: z.enum(['public', 'private']).optional(),
 });
 
 router.post('/custom', async (req, res, next) => {
   try {
-    const { lat, lng, name, sport } = customSchema.parse(req.body);
+    const { lat, lng, name, sport, visibility } = customSchema.parse(req.body);
     const userId = req.user!.id;
 
     const placeId = `custom:${userId}:${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const created = await prisma.$transaction(async (tx) => {
       const court = await tx.court.create({
-        data: { placeId, name, lat, lng, isCustom: true, addedByUserId: userId },
+        data: {
+          placeId,
+          name,
+          lat,
+          lng,
+          isCustom: true,
+          addedByUserId: userId,
+          visibility: visibility ?? 'public',
+        },
       });
       const saved = await tx.savedCourt.create({
         data: { userId, placeId: court.placeId, sport },

@@ -6,6 +6,7 @@ import { buildPlacesKeyword, type Sport } from './sport';
 import { fetchForecast } from './weather';
 import { weatherFromForecast, type Forecast } from './forecast';
 import { score, type PlayabilityScore, type WeatherSummary } from './playability';
+import { visibilityWhereClause } from './visibility';
 
 const oauthClient = new OAuth2Client(env.googleOauthClientId);
 
@@ -78,14 +79,24 @@ export async function fetchNearbyCourts(
   radiusMeters: number,
   sport: Sport = 'tennis',
   userKeyword?: string,
+  userId: string | null = null,
 ): Promise<{ courts: HydratedCourt[]; stale: boolean }> {
   const keyword = buildPlacesKeyword(sport, userKeyword);
   const hasUserKeyword = !!(userKeyword && userKeyword.trim());
 
-  // No keyword → no Places query. Returns empty so custom-mode users
-  // see only their saved + custom-dropped pins until they search.
+  // Pull custom courts that the caller is allowed to see within a rough
+  // bounding box of the query center. Used to surface other users'
+  // public custom courts (and the caller's own private ones) alongside
+  // Google Places results. Bounding-box not great-circle distance, but
+  // that's fine for an MVP — the slight slop near the radius edge is
+  // invisible to the user.
+  const customCourts = await fetchVisibleCustomCourtsNear(lat, lng, radiusMeters, userId);
+
+  // No keyword → no Places query. Returns just the visible custom
+  // courts so custom-mode users still see those.
   if (!keyword.trim()) {
-    return { courts: [], stale: false };
+    const hydrated = await hydrateCourts(customCourts);
+    return { courts: hydrated, stale: false };
   }
 
   // Cache key includes sport so tennis and basketball pin sets don't collide.
@@ -95,7 +106,7 @@ export async function fetchNearbyCourts(
     ? null
     : await getCached<CourtSummary[]>('placesCache', cacheKey, TTL.placesMs);
   if (cached && !cached.stale) {
-    const hydrated = await hydrateCourts(cached.payload);
+    const hydrated = await hydrateCourts(mergeUnique(cached.payload, customCourts));
     return { courts: hydrated, stale: false };
   }
 
@@ -143,15 +154,66 @@ export async function fetchNearbyCourts(
       ),
     );
 
-    const hydrated = await hydrateCourts(courts);
+    const hydrated = await hydrateCourts(mergeUnique(courts, customCourts));
     return { courts: hydrated, stale: false };
   } catch (err) {
     if (cached) {
-      const hydrated = await hydrateCourts(cached.payload);
+      const hydrated = await hydrateCourts(mergeUnique(cached.payload, customCourts));
       return { courts: hydrated, stale: true };
     }
     throw err;
   }
+}
+
+/**
+ * Returns the custom courts (`isCustom = true`) the caller is allowed
+ * to see within a rough lat/lng bounding box of the query center. Uses
+ * the same visibility filter as the rest of the API.
+ */
+async function fetchVisibleCustomCourtsNear(
+  lat: number,
+  lng: number,
+  radiusMeters: number,
+  userId: string | null,
+): Promise<CourtSummary[]> {
+  const latDelta = radiusMeters / 111_000; // ~degrees of latitude per meter
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  // Guard against poles where cosLat → 0; fall back to a wide window.
+  const lngDelta = cosLat > 0.01 ? latDelta / cosLat : 180;
+
+  const rows = await prisma.court.findMany({
+    where: {
+      isCustom: true,
+      ...visibilityWhereClause(userId),
+      lat: { gte: lat - latDelta, lte: lat + latDelta },
+      lng: { gte: lng - lngDelta, lte: lng + lngDelta },
+    },
+  });
+
+  return rows.map((c) => ({
+    placeId: c.placeId,
+    name: c.name,
+    lat: c.lat,
+    lng: c.lng,
+    address: c.address,
+  }));
+}
+
+/**
+ * Merge two `CourtSummary` lists, de-duping by placeId. Order: `primary`
+ * first (preserving Places ordering), then any `extra` entries not
+ * already present.
+ */
+function mergeUnique(primary: CourtSummary[], extra: CourtSummary[]): CourtSummary[] {
+  const seen = new Set(primary.map((c) => c.placeId));
+  const out = [...primary];
+  for (const c of extra) {
+    if (!seen.has(c.placeId)) {
+      out.push(c);
+      seen.add(c.placeId);
+    }
+  }
+  return out;
 }
 
 async function hydrateCourts(courts: CourtSummary[]): Promise<HydratedCourt[]> {

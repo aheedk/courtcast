@@ -38,6 +38,7 @@ model Court {
   lng           Float
   address       String?
   isCustom      Boolean       @default(false)
+  visibility    String        @default("public")
   addedByUserId String?
   addedBy       User?         @relation("UserCustomCourts", fields: [addedByUserId], references: [id])
   fetchedAt     DateTime      @default(now())
@@ -45,6 +46,7 @@ model Court {
   reports       CourtReport[]
 
   @@index([addedByUserId])
+  @@index([visibility])
 }
 
 model SavedCourt {

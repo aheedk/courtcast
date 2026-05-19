@@ -9,6 +9,7 @@ import {
   RATE_LIMIT_PER_HOUR,
   RATE_LIMIT_WINDOW_MS,
 } from '../lib/reports';
+import { canSeeCourt, visibilityWhereClause } from '../lib/visibility';
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.post('/:placeId/reports', requireAuth, async (req, res, next) => {
     const userId = req.user!.id;
 
     const court = await prisma.court.findUnique({ where: { placeId } });
-    if (!court) {
+    if (!court || !canSeeCourt(court, userId)) {
       return res.status(404).json({
         error: { code: 'COURT_UNKNOWN', message: 'Court not seen yet — open it on the map first' },
       });
@@ -93,6 +94,13 @@ router.post('/:placeId/reports', requireAuth, async (req, res, next) => {
 router.get('/:placeId/report', async (req, res, next) => {
   try {
     const { placeId } = req.params;
+    const court = await prisma.court.findUnique({ where: { placeId } });
+    if (!court || !canSeeCourt(court, req.user?.id ?? null)) {
+      // 204 (same shape as "no recent report") rather than 404 so a
+      // hidden private court is indistinguishable from one without
+      // a recent report.
+      return res.status(204).end();
+    }
     const latest = await prisma.courtReport.findFirst({
       where: { placeId, createdAt: { gt: freshnessCutoff() } },
       orderBy: { createdAt: 'desc' },
@@ -115,13 +123,23 @@ router.post('/reports/batch', async (req, res, next) => {
       return res.json({ reports: {} });
     }
 
-    // Pull all reports across the requested places within the 24h window
-    // in one query, then keep only the latest per placeId. This is one
-    // round-trip vs. one-per-place.
-    const rows = await prisma.courtReport.findMany({
-      where: { placeId: { in: placeIds }, createdAt: { gt: freshnessCutoff() } },
-      orderBy: { createdAt: 'desc' },
+    // First, narrow the requested placeIds down to ones the caller can
+    // see. Hidden ids still get a `null` value in the response (same
+    // shape as "no recent report") so we don't leak existence.
+    const visibleCourts = await prisma.court.findMany({
+      where: { placeId: { in: placeIds }, ...visibilityWhereClause(req.user?.id ?? null) },
+      select: { placeId: true },
     });
+    const visibleIds = new Set(visibleCourts.map((c) => c.placeId));
+
+    // Pull all reports across the visible places within the 24h window
+    // in one query, then keep only the latest per placeId.
+    const rows = visibleIds.size === 0
+      ? []
+      : await prisma.courtReport.findMany({
+          where: { placeId: { in: [...visibleIds] }, createdAt: { gt: freshnessCutoff() } },
+          orderBy: { createdAt: 'desc' },
+        });
 
     const latestByPlaceId: Record<string, ReturnType<typeof serializeReport>> = {};
     for (const row of rows) {

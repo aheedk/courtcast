@@ -23,6 +23,7 @@ router.get('/', async (req, res, next) => {
       radius ?? env.defaultRadiusMeters,
       (sport as 'tennis' | 'basketball' | undefined) ?? 'tennis',
       keyword,
+      req.user?.id ?? null,
     );
     res.json({ courts: result.courts, stale: result.stale });
   } catch (err) {
