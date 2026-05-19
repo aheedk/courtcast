@@ -49,7 +49,7 @@ export function LatestReport({ placeId, report, compact = false }: Props) {
     <div className="mt-4 border-t border-neutral-200 pt-3 flex items-baseline justify-between gap-3">
       <div className="min-w-0">
         <p className="text-[11px] uppercase tracking-wide text-neutral-500">Status</p>
-        <p className="text-sm font-medium text-neutral-900 truncate">{summary}</p>
+        <p className="text-lg font-semibold text-neutral-900 truncate">{summary}</p>
       </div>
       <p className="text-xs text-neutral-400 shrink-0">{when}</p>
     </div>

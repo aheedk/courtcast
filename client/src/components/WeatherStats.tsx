@@ -50,13 +50,23 @@ export function WeatherStats({ forecast, compact = false, report = null }: Props
     </div>
   );
 
+  // Status gets its own render path (not via `stat()`) so the value can
+  // run one size larger than the weather stats — users wanted it to
+  // stand out a bit — and so the time-ago label can sit at text-xs
+  // instead of the tiny 10px secondary that the weather stats don't
+  // need at all. "open" is in the value template ("1 open · Dry") so
+  // the bare number isn't ambiguous on its own.
   const statusCell = report && (
-    <div className="col-span-3 sm:col-span-1">
-      {stat(
-        'Status',
-        `${OPEN_COURTS_LABEL[report.openCourts]} · ${CONDITION_LABEL[report.condition]}`,
-        relativeTime(report.createdAt),
-      )}
+    <div className="col-span-3 sm:col-span-1 flex flex-col min-w-0">
+      <span className="text-[11px] uppercase tracking-wide text-neutral-500">Status</span>
+      <span
+        className={(compact ? 'text-lg' : 'text-2xl') + ' font-semibold truncate'}
+      >
+        {OPEN_COURTS_LABEL[report.openCourts]} open · {CONDITION_LABEL[report.condition]}
+      </span>
+      <span className="text-xs text-neutral-400 truncate">
+        {relativeTime(report.createdAt)}
+      </span>
     </div>
   );
 
