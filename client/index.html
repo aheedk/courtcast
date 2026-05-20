@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- maximum-scale=1 + user-scalable=no together stop two iOS Safari
+         behaviours: pinch-zoom on the document (the app's UI is a fixed
+         layout, not a zoomable page), and the auto-zoom-in-on-focus that
+         iOS does when a tapped input has font-size < 16px (e.g. the
+         search bar's text-sm). Google Maps does its own pinch-zoom via
+         touch events, independent of this viewport setting, so the
+         map's zoom-in/out still works inside the iframe-like canvas. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#16a34a" />
     <meta name="description" content="Tennis court weather + playability. See which courts are GOOD to play right now." />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
