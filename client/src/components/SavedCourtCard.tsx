@@ -68,7 +68,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
     <>
       <div
         onClick={() => !renaming && onSelect(court.placeId)}
-        className="cursor-pointer w-full max-w-full overflow-x-clip bg-gradient-to-br from-white via-emerald-50/40 to-sky-50/70 border border-emerald-100 rounded-2xl p-4 sm:p-5 shadow-sm shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-950/10 hover:border-emerald-200 transition-shadow"
+        className="cursor-pointer w-full max-w-full overflow-x-clip bg-gradient-to-br from-emerald-50/85 via-teal-50/80 to-sky-100/75 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 shadow-sm shadow-emerald-950/5 hover:shadow-lg hover:shadow-emerald-950/10 hover:border-emerald-300 transition-shadow"
       >
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export function SavedCourtCard({ court, onSelect, listScopedRemove, report }: Pr
             e.stopPropagation();
             selectCourtAndReport(court.placeId);
           }}
-          className="mt-3 w-full py-2 rounded-xl border border-emerald-100 bg-white/75 text-emerald-950 text-sm font-semibold hover:bg-white"
+          className="mt-3 w-full py-2 rounded-xl border border-emerald-200 bg-white/60 text-emerald-950 text-sm font-semibold hover:bg-white/80"
         >
           {report ? 'Update status' : 'Report status'}
         </button>
