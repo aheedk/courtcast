@@ -135,9 +135,8 @@ export function MyCourtsPage({ user }: { user: User }) {
         />
       )}
 
-      {/* Persistent time slider, mirroring the MapPage layout — hidden
-          while the CourtPanel is open so it doesn't overlap. */}
-      {allCourts.length > 0 && !selectedPlaceId && (
+      {/* Persistent time slider, mirroring the MapPage layout. */}
+      {allCourts.length > 0 && (
         <div className="fixed bottom-3 left-3 right-3 z-20 sm:max-w-3xl sm:left-1/2 sm:-translate-x-1/2 pointer-events-auto">
           <TimeScrubber />
         </div>

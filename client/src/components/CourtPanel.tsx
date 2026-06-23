@@ -74,7 +74,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
         sm:w-[380px] sm:max-h-[calc(100vh-6rem)]
       "
     >
-      <div className="p-5">
+      <div className="p-5 pb-28 sm:pb-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {renaming && savedEntry ? (
