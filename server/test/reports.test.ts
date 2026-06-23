@@ -147,7 +147,7 @@ describe('POST /api/places/:placeId/reports', () => {
     prismaMock.courtReport.create.mockResolvedValue({
       id: 'r1',
       openCourts: 'two',
-      condition: null,
+      condition: '',
       createdAt: new Date('2026-05-18T12:00:00Z'),
     });
 
@@ -167,7 +167,7 @@ describe('POST /api/places/:placeId/reports', () => {
         placeId: PLACE_ID,
         userId: USER_ID,
         openCourts: 'two',
-        condition: null,
+        condition: '',
       },
     });
   });
@@ -178,7 +178,7 @@ describe('POST /api/places/:placeId/reports', () => {
     prismaMock.courtReport.findFirst.mockResolvedValue(null);
     prismaMock.courtReport.create.mockResolvedValue({
       id: 'r1',
-      openCourts: null,
+      openCourts: '',
       condition: 'little_wet',
       createdAt: new Date('2026-05-18T12:00:00Z'),
     });
@@ -198,7 +198,7 @@ describe('POST /api/places/:placeId/reports', () => {
       data: {
         placeId: PLACE_ID,
         userId: USER_ID,
-        openCourts: null,
+        openCourts: '',
         condition: 'little_wet',
       },
     });

@@ -33,8 +33,8 @@ function recordSubmitAndCheckRateLimit(userId: string): boolean {
 
 function serializeReport(r: { openCourts: string | null; condition: string | null; createdAt: Date }) {
   return {
-    openCourts: r.openCourts,
-    condition: r.condition,
+    openCourts: r.openCourts || null,
+    condition: r.condition || null,
     createdAt: r.createdAt.toISOString(),
   };
 }
@@ -86,8 +86,11 @@ router.post('/:placeId/reports', requireAuth, async (req, res, next) => {
           data: {
             placeId,
             userId,
-            openCourts: input.openCourts ?? null,
-            condition: input.condition ?? null,
+            // Empty strings are intentionally used as the "not reported"
+            // sentinel so partial reports keep working even before a live
+            // database has relaxed the old NOT NULL columns.
+            openCourts: input.openCourts ?? '',
+            condition: input.condition ?? '',
           },
         });
 
