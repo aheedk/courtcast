@@ -24,8 +24,6 @@ import type { User } from '../types';
 const MIN_REFRESH_ZOOM = 11;
 const MIN_REFRESH_RADIUS_METERS = 4_000;
 const MAX_REFRESH_RADIUS_METERS = 45_000;
-const MIN_REFRESH_MOVE_METERS = 1_200;
-const DEFAULT_SEARCH_RADIUS_METERS = 16_000;
 
 function clampRadius(radiusMeters: number | null): number | undefined {
   if (radiusMeters === null) return undefined;
@@ -33,22 +31,6 @@ function clampRadius(radiusMeters: number | null): number | undefined {
     MIN_REFRESH_RADIUS_METERS,
     Math.min(MAX_REFRESH_RADIUS_METERS, radiusMeters),
   );
-}
-
-function distanceMeters(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const earthRadiusMeters = 6_371_000;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * earthRadiusMeters * Math.asin(Math.sqrt(h));
 }
 
 export function MapPage({ user }: { user: User | null }) {
@@ -76,11 +58,6 @@ export function MapPage({ user }: { user: User | null }) {
 
   const customEmpty = sport === 'custom' && !keyword.trim();
   const nearbyKey = queryKeys.nearbyCourts(center.lat, center.lng, sport, keyword, searchRadius);
-  const refreshDistanceMeters = viewport ? distanceMeters(center, viewport.center) : 0;
-  const refreshMovedArea = refreshDistanceMeters >= Math.max(
-    MIN_REFRESH_MOVE_METERS,
-    (searchRadius ?? DEFAULT_SEARCH_RADIUS_METERS) * 0.25,
-  );
   const refreshTooWide = !!viewport && (
     viewport.zoom < MIN_REFRESH_ZOOM ||
     (viewport.radiusMeters !== null && viewport.radiusMeters > MAX_REFRESH_RADIUS_METERS)
@@ -240,11 +217,11 @@ export function MapPage({ user }: { user: User | null }) {
         onMapClick={(loc) => setPendingPin(loc)}
       />
 
-      {!addMode && !customEmpty && refreshMovedArea && (
+      {!addMode && !customEmpty && (
         <div className="absolute top-[7.25rem] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
           <button
             onClick={handleRefreshArea}
-            disabled={courts.isFetching}
+            disabled={courts.isFetching || !viewport}
             className="rounded-full bg-white/95 backdrop-blur border border-neutral-200 shadow-md px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-white disabled:opacity-70"
           >
             {courts.isFetching
