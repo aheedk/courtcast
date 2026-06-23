@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
-import { OPEN_COURTS_LABEL, CONDITION_LABEL } from '../types';
+import { reportSummary } from '../lib/reportSummary';
 import type { CourtReport } from '../types';
 
 interface Props {
@@ -34,7 +34,7 @@ export function LatestReport({ placeId, report, compact = false }: Props) {
   const r: CourtReport | null = report !== undefined ? report : (fetched.data ?? null);
   if (!r) return null;
 
-  const summary = `${OPEN_COURTS_LABEL[r.openCourts]} open · ${CONDITION_LABEL[r.condition]}`;
+  const summary = reportSummary(r);
   const when = relativeTime(r.createdAt);
 
   if (compact) {

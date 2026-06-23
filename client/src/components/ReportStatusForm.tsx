@@ -60,8 +60,11 @@ export function ReportStatusForm({ placeId }: Props) {
 
   const submit = useMutation({
     mutationFn: () => {
-      if (!openCourts || !condition) throw new Error('Missing selections');
-      return api.submitCourtReport(placeId, { openCourts, condition });
+      if (!openCourts && !condition) throw new Error('Missing selections');
+      return api.submitCourtReport(placeId, {
+        ...(openCourts ? { openCourts } : {}),
+        ...(condition ? { condition } : {}),
+      });
     },
     onSuccess: (saved: CourtReport) => {
       // Update the per-place cache and invalidate the batch so map/saved
@@ -93,7 +96,7 @@ export function ReportStatusForm({ placeId }: Props) {
     );
   }
 
-  const canSubmit = openCourts !== null && condition !== null && !submit.isPending;
+  const canSubmit = (openCourts !== null || condition !== null) && !submit.isPending;
 
   return (
     <div className="border border-neutral-200 rounded-2xl p-4 bg-neutral-50">
@@ -116,7 +119,11 @@ export function ReportStatusForm({ placeId }: Props) {
         <p className="text-[11px] uppercase tracking-wide text-neutral-500 mb-2">Open courts</p>
         <div className="flex gap-2 flex-wrap">
           {OPEN_COURTS_VALUES.map((v) => (
-            <Chip key={v} selected={openCourts === v} onClick={() => setOpenCourts(v)}>
+            <Chip
+              key={v}
+              selected={openCourts === v}
+              onClick={() => setOpenCourts(openCourts === v ? null : v)}
+            >
               {OPEN_COURTS_LABEL[v]}
             </Chip>
           ))}
@@ -127,7 +134,11 @@ export function ReportStatusForm({ placeId }: Props) {
         <p className="text-[11px] uppercase tracking-wide text-neutral-500 mb-2">Conditions</p>
         <div className="flex gap-2 flex-wrap">
           {CONDITION_VALUES.map((v) => (
-            <Chip key={v} selected={condition === v} onClick={() => setCondition(v)}>
+            <Chip
+              key={v}
+              selected={condition === v}
+              onClick={() => setCondition(condition === v ? null : v)}
+            >
               {CONDITION_LABEL[v]}
             </Chip>
           ))}

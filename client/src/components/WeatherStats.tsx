@@ -1,6 +1,6 @@
 import type { Forecast, CourtReport } from '../types';
 import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
-import { OPEN_COURTS_LABEL, CONDITION_LABEL } from '../types';
+import { reportSummary } from '../lib/reportSummary';
 import { useSelectedTime } from '../stores/selectedTime';
 
 interface Props {
@@ -62,7 +62,7 @@ export function WeatherStats({ forecast, compact = false, report = null }: Props
       <span
         className={(compact ? 'text-lg' : 'text-2xl') + ' font-semibold truncate'}
       >
-        {OPEN_COURTS_LABEL[report.openCourts]} open · {CONDITION_LABEL[report.condition]}
+        {reportSummary(report)}
       </span>
       <span className="text-xs text-neutral-400 truncate">
         {relativeTime(report.createdAt)}

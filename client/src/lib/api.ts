@@ -118,7 +118,7 @@ export const api = {
   courtReport: (placeId: string) =>
     request<CourtReport | undefined>(`/api/places/${placeId}/report`),
 
-  submitCourtReport: (placeId: string, input: { openCourts: OpenCourts; condition: CourtCondition }) =>
+  submitCourtReport: (placeId: string, input: { openCourts?: OpenCourts; condition?: CourtCondition }) =>
     request<CourtReport>(`/api/places/${placeId}/reports`, {
       method: 'POST',
       body: JSON.stringify(input),

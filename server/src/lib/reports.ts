@@ -7,9 +7,12 @@ export type OpenCourts = (typeof OPEN_COURTS_VALUES)[number];
 export type CourtCondition = (typeof CONDITION_VALUES)[number];
 
 export const reportInputSchema = z.object({
-  openCourts: z.enum(OPEN_COURTS_VALUES),
-  condition: z.enum(CONDITION_VALUES),
-});
+  openCourts: z.enum(OPEN_COURTS_VALUES).optional(),
+  condition: z.enum(CONDITION_VALUES).optional(),
+}).refine(
+  (input) => input.openCourts !== undefined || input.condition !== undefined,
+  { message: 'Select open courts or conditions' },
+);
 
 export type ReportInput = z.infer<typeof reportInputSchema>;
 

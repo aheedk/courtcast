@@ -140,6 +140,70 @@ describe('POST /api/places/:placeId/reports', () => {
     expect(prismaMock.courtReport.update).not.toHaveBeenCalled();
   });
 
+  it('201 creates a report with only open courts selected', async () => {
+    authedSession();
+    courtExists();
+    prismaMock.courtReport.findFirst.mockResolvedValue(null);
+    prismaMock.courtReport.create.mockResolvedValue({
+      id: 'r1',
+      openCourts: 'two',
+      condition: null,
+      createdAt: new Date('2026-05-18T12:00:00Z'),
+    });
+
+    const res = await request(app)
+      .post(`/api/places/${PLACE_ID}/reports`)
+      .set('Cookie', SESSION_COOKIE)
+      .send({ openCourts: 'two' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({
+      openCourts: 'two',
+      condition: null,
+      createdAt: '2026-05-18T12:00:00.000Z',
+    });
+    expect(prismaMock.courtReport.create).toHaveBeenCalledWith({
+      data: {
+        placeId: PLACE_ID,
+        userId: USER_ID,
+        openCourts: 'two',
+        condition: null,
+      },
+    });
+  });
+
+  it('201 creates a report with only conditions selected', async () => {
+    authedSession();
+    courtExists();
+    prismaMock.courtReport.findFirst.mockResolvedValue(null);
+    prismaMock.courtReport.create.mockResolvedValue({
+      id: 'r1',
+      openCourts: null,
+      condition: 'little_wet',
+      createdAt: new Date('2026-05-18T12:00:00Z'),
+    });
+
+    const res = await request(app)
+      .post(`/api/places/${PLACE_ID}/reports`)
+      .set('Cookie', SESSION_COOKIE)
+      .send({ condition: 'little_wet' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({
+      openCourts: null,
+      condition: 'little_wet',
+      createdAt: '2026-05-18T12:00:00.000Z',
+    });
+    expect(prismaMock.courtReport.create).toHaveBeenCalledWith({
+      data: {
+        placeId: PLACE_ID,
+        userId: USER_ID,
+        openCourts: null,
+        condition: 'little_wet',
+      },
+    });
+  });
+
   it('201 updates the existing row when the same user reported within the 10-min window', async () => {
     authedSession();
     courtExists();
@@ -167,6 +231,44 @@ describe('POST /api/places/:placeId/reports', () => {
     expect(res.body.openCourts).toBe('three_plus');
     expect(prismaMock.courtReport.update).toHaveBeenCalledOnce();
     expect(prismaMock.courtReport.create).not.toHaveBeenCalled();
+  });
+
+  it('201 updates only the selected field on recent self-reports', async () => {
+    authedSession();
+    courtExists();
+    prismaMock.courtReport.findFirst.mockResolvedValue({
+      id: 'r1',
+      placeId: PLACE_ID,
+      userId: USER_ID,
+      openCourts: 'one',
+      condition: 'dry',
+      createdAt: new Date(Date.now() - 60_000),
+    });
+    prismaMock.courtReport.update.mockResolvedValue({
+      id: 'r1',
+      openCourts: 'three_plus',
+      condition: 'dry',
+      createdAt: new Date('2026-05-18T12:05:00Z'),
+    });
+
+    const res = await request(app)
+      .post(`/api/places/${PLACE_ID}/reports`)
+      .set('Cookie', SESSION_COOKIE)
+      .send({ openCourts: 'three_plus' });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({
+      openCourts: 'three_plus',
+      condition: 'dry',
+      createdAt: '2026-05-18T12:05:00.000Z',
+    });
+    expect(prismaMock.courtReport.update).toHaveBeenCalledWith({
+      where: { id: 'r1' },
+      data: {
+        openCourts: 'three_plus',
+        createdAt: expect.any(Date),
+      },
+    });
   });
 
   it('429 when the per-user hourly rate limit is exceeded', async () => {

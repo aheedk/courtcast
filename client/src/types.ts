@@ -97,8 +97,8 @@ export const CONDITION_LABEL: Record<CourtCondition, string> = {
 };
 
 export interface CourtReport {
-  openCourts: OpenCourts;
-  condition: CourtCondition;
+  openCourts: OpenCourts | null;
+  condition: CourtCondition | null;
   createdAt: string; // ISO8601 from server
 }
 

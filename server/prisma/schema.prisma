@@ -102,8 +102,8 @@ model CourtReport {
   id         String   @id @default(cuid())
   placeId    String
   userId     String
-  openCourts String
-  condition  String
+  openCourts String?
+  condition  String?
   createdAt  DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)

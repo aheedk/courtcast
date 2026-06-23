@@ -31,7 +31,7 @@ function recordSubmitAndCheckRateLimit(userId: string): boolean {
   return true;
 }
 
-function serializeReport(r: { openCourts: string; condition: string; createdAt: Date }) {
+function serializeReport(r: { openCourts: string | null; condition: string | null; createdAt: Date }) {
   return {
     openCourts: r.openCourts,
     condition: r.condition,
@@ -71,20 +71,31 @@ router.post('/:placeId/reports', requireAuth, async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
+    const updateData = {
+      ...(input.openCourts !== undefined ? { openCourts: input.openCourts } : {}),
+      ...(input.condition !== undefined ? { condition: input.condition } : {}),
+      createdAt: new Date(),
+    };
+
     const saved = recent
       ? await prisma.courtReport.update({
           where: { id: recent.id },
-          data: { openCourts: input.openCourts, condition: input.condition, createdAt: new Date() },
+          data: updateData,
         })
       : await prisma.courtReport.create({
-          data: { placeId, userId, openCourts: input.openCourts, condition: input.condition },
+          data: {
+            placeId,
+            userId,
+            openCourts: input.openCourts ?? null,
+            condition: input.condition ?? null,
+          },
         });
 
     res.status(201).json(serializeReport(saved));
   } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({
-        error: { code: 'INVALID_INPUT', message: 'Invalid openCourts or condition', issues: err.issues },
+        error: { code: 'INVALID_INPUT', message: 'Select open courts, conditions, or both', issues: err.issues },
       });
     }
     next(err);
