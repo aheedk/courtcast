@@ -13,11 +13,18 @@ export interface PinForMap {
   hasFreshReport?: boolean;
 }
 
+export interface MapViewport {
+  center: { lat: number; lng: number };
+  zoom: number;
+  radiusMeters: number | null;
+}
+
 interface Props {
   center: { lat: number; lng: number };
   pins: PinForMap[];
   selectedPlaceId: string | null;
   onSelect: (placeId: string) => void;
+  onViewportChanged?: (viewport: MapViewport) => void;
   addMode?: boolean;
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   pendingPin?: { lat: number; lng: number } | null;
@@ -59,6 +66,22 @@ const REPORTED_FILL_COLOR = '#3b82f6';
 
 function colorFor(score: PlayabilityScore | null): string {
   return score ? COLOR[score] : GRAY;
+}
+
+function distanceMeters(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const earthRadiusMeters = 6_371_000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadiusMeters * Math.asin(Math.sqrt(h));
 }
 
 /**
@@ -123,6 +146,7 @@ export function MapView({
   pins,
   selectedPlaceId,
   onSelect,
+  onViewportChanged,
   addMode = false,
   onMapClick,
   pendingPin,
@@ -136,6 +160,23 @@ export function MapView({
 
   const memoCenter = useMemo(() => center, [center.lat, center.lng]);
   const mapRef = useRef<google.maps.Map | null>(null);
+
+  function emitViewport() {
+    if (!mapRef.current || !onViewportChanged) return;
+    const mapCenter = mapRef.current.getCenter();
+    if (!mapCenter) return;
+
+    const center = { lat: mapCenter.lat(), lng: mapCenter.lng() };
+    const zoom = mapRef.current.getZoom() ?? 0;
+    const ne = mapRef.current.getBounds()?.getNorthEast();
+    onViewportChanged({
+      center,
+      zoom,
+      radiusMeters: ne
+        ? Math.round(distanceMeters(center, { lat: ne.lat(), lng: ne.lng() }))
+        : null,
+    });
+  }
 
   useEffect(() => {
     if (mapRef.current) {
@@ -167,6 +208,7 @@ export function MapView({
       onLoad={(m) => {
         mapRef.current = m;
       }}
+      onIdle={emitViewport}
       onClick={(e) => {
         if (!addMode || !onMapClick || !e.latLng) return;
         onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });

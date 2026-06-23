@@ -46,7 +46,7 @@ export function geohashFor(lat: number, lng: number, precision: number): string 
 }
 
 export const TTL = {
-  weatherMs: 10 * 60 * 1000,
+  weatherMs: 60 * 60 * 1000,
   placesMs: 7 * 24 * 60 * 60 * 1000,
 };
 

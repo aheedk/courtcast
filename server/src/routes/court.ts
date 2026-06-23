@@ -17,14 +17,26 @@ router.get('/:placeId', async (req, res, next) => {
       // to non-owners through the response status.
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Court not found' } });
     }
-    const r = await fetchForecast(court.lat, court.lng);
-    const weather = weatherFromForecast(r.forecast);
+    let forecast = null;
+    let weather = null;
+    let scoreVal = null;
+    let stale = true;
+    try {
+      const r = await fetchForecast(court.lat, court.lng);
+      forecast = r.forecast;
+      weather = weatherFromForecast(r.forecast);
+      scoreVal = weather ? score(weather) : null;
+      stale = r.stale;
+    } catch {
+      // Court details should remain usable for saving/reporting even when
+      // the weather provider is temporarily unavailable.
+    }
     res.json({
       court,
-      forecast: r.forecast,
+      forecast,
       weather,
-      score: weather ? score(weather) : null,
-      stale: r.stale,
+      score: scoreVal,
+      stale,
     });
   } catch (err) {
     next(err);

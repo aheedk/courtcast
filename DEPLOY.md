@@ -188,6 +188,6 @@ app in **Testing** mode and add up to 100 test users by email.
   is the only billable call we make and the 7-day cache makes it
   effectively free at personal scale. Maps JavaScript API loads are
   free under typical PWA usage.
-- **OpenWeatherMap** free tier is 1,000 calls/day — the 10-minute geohash
-  cache means you can have many users in the same city for one call
-  every 10 minutes.
+- **OpenWeatherMap** free tier is 1,000 calls/day — it is used as the
+  fallback when `OPENWEATHER_KEY` is configured. The 1-hour geohash
+  cache plus same-cell request coalescing keeps repeated city traffic low.

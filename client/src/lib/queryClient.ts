@@ -13,8 +13,8 @@ export const queryClient = new QueryClient({
 
 export const queryKeys = {
   me: ['me'] as const,
-  nearbyCourts: (lat: number, lng: number, sport: Sport, keyword?: string) =>
-    ['courts', round(lat), round(lng), sport, keyword ?? ''] as const,
+  nearbyCourts: (lat: number, lng: number, sport: Sport, keyword?: string, radius?: number) =>
+    ['courts', round(lat), round(lng), sport, keyword ?? '', radius ?? 'default'] as const,
   court: (placeId: string) => ['court', placeId] as const,
   savedCourts: ['savedCourts'] as const,
   lists: ['lists'] as const,

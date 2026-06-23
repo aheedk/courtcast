@@ -31,7 +31,7 @@ thresholds**.
 | Server | Node 20 + Express + TypeScript + Prisma |
 | DB | PostgreSQL (Docker locally; Railway-managed in prod) |
 | Auth | Google Sign-In (Identity Services) → server-side ID token verification → HTTP-only `cc_session` cookie |
-| Weather | Open-Meteo (hourly, 48h, no key) — default; OpenWeatherMap (5-day/3-hour, interpolated to hourly) as fallback. Geohash-5 cached 10 min via `weather.ts` dispatcher. |
+| Weather | Open-Meteo (hourly, 48h, no key) — default; OpenWeatherMap (5-day/3-hour, interpolated to hourly) as automatic fallback when configured. Geohash-5 cached 1 hour via `weather.ts` dispatcher. |
 | Places | Google Maps Places Nearby Search (geohash-4 cached 7 days) |
 
 ## Features (rough chronological build order)
@@ -102,7 +102,7 @@ These need to be set on the Railway server service:
 | `CLIENT_ORIGIN` | `https://courtclimate.com` (also accepts `*.up.railway.app`) |
 | `GOOGLE_OAUTH_CLIENT_ID` | Same as client side |
 | `GOOGLE_PLACES_KEY` | **Server-side key** with no application restriction (browser-restricted key won't work for server fetch) |
-| `OPENWEATHER_KEY` | Required only when WEATHER_PROVIDER=openweather. OWM free-tier key. |
+| `OPENWEATHER_KEY` | OWM free-tier key. Required when `WEATHER_PROVIDER=openweather`; optional but recommended as fallback for Open-Meteo rate limits. |
 
 The client-side env vars (`VITE_GOOGLE_MAPS_KEY`,
 `VITE_GOOGLE_OAUTH_CLIENT_ID`) are baked into the Vite build — set
@@ -177,8 +177,9 @@ DEPLOY.md                        Old Netlify + Railway flow — partly stale
   attempt to forge a `Referer` header (commit `1e86ae3`) didn't work
   reliably and was reverted in `0055f9a`.
 - **Server-side weather fetch on every `/api/courts`** — geohash-5
-  cached, so most pins in a small radius hit the cache. First-load
-  in a new area: ~3 weather provider calls (Open-Meteo by default).
+  cached, same-cell refreshes are coalesced, and upstream concurrency
+  is capped. First-load in a new area: ~3 weather provider calls
+  (Open-Meteo by default, OpenWeatherMap fallback when configured).
 - **All UI prefs in `localStorage`** — sport chip, enabled sports,
   per-sport thresholds, anything in Settings. Per-device, no sync. If
   cross-device sync becomes an ask, promote to a `UserSettings` table.
@@ -192,7 +193,8 @@ DEPLOY.md                        Old Netlify + Railway flow — partly stale
 
 - **Open-Meteo provider — live.** As of 2026-04-29, the default weather
   provider is Open-Meteo (hourly, free, no API key). Set
-  `WEATHER_PROVIDER=openweather` to fall back to OWM. The previously
+  `OPENWEATHER_KEY` to enable automatic OWM fallback, or set
+  `WEATHER_PROVIDER=openweather` to make OWM primary. The previously
   scheduled remote agent for adding Open-Meteo (routine
   `trig_01KD12VvGPQnspTqWwfNDE13`, fire date 2026-05-11) has been
   canceled because this work absorbs it.

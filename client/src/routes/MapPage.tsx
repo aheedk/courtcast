@@ -10,7 +10,7 @@ import { useEnabledSports } from '../stores/enabledSports';
 import { useSelectedTime } from '../stores/selectedTime';
 import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
 import { scoreFromThresholds } from '../lib/playability';
-import { MapView, type PinForMap } from '../components/MapView';
+import { MapView, type MapViewport, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
 import { SearchBar } from '../components/SearchBar';
 import { SportChips } from '../components/SportChips';
@@ -20,6 +20,36 @@ import { MapLegend } from '../components/MapLegend';
 import { TimeScrubber } from '../components/TimeScrubber';
 import { LocateMeButton } from '../components/LocateMeButton';
 import type { User } from '../types';
+
+const MIN_REFRESH_ZOOM = 11;
+const MIN_REFRESH_RADIUS_METERS = 4_000;
+const MAX_REFRESH_RADIUS_METERS = 45_000;
+const MIN_REFRESH_MOVE_METERS = 1_200;
+const DEFAULT_SEARCH_RADIUS_METERS = 16_000;
+
+function clampRadius(radiusMeters: number | null): number | undefined {
+  if (radiusMeters === null) return undefined;
+  return Math.max(
+    MIN_REFRESH_RADIUS_METERS,
+    Math.min(MAX_REFRESH_RADIUS_METERS, radiusMeters),
+  );
+}
+
+function distanceMeters(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const earthRadiusMeters = 6_371_000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadiusMeters * Math.asin(Math.sqrt(h));
+}
 
 export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
@@ -36,15 +66,40 @@ export function MapPage({ user }: { user: User | null }) {
   const [keyword, setKeyword] = useState<string>('');
   const [addMode, setAddMode] = useState(false);
   const [pendingPin, setPendingPin] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchRadius, setSearchRadius] = useState<number | undefined>(undefined);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const [viewport, setViewport] = useState<MapViewport | null>(null);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
   // Captured GPS position from the locate-me button. Re-set on each tap;
   // the marker stays at the captured spot when the map is panned away.
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const customEmpty = sport === 'custom' && !keyword.trim();
+  const nearbyKey = queryKeys.nearbyCourts(center.lat, center.lng, sport, keyword, searchRadius);
+  const refreshDistanceMeters = viewport ? distanceMeters(center, viewport.center) : 0;
+  const refreshMovedArea = refreshDistanceMeters >= Math.max(
+    MIN_REFRESH_MOVE_METERS,
+    (searchRadius ?? DEFAULT_SEARCH_RADIUS_METERS) * 0.25,
+  );
+  const refreshTooWide = !!viewport && (
+    viewport.zoom < MIN_REFRESH_ZOOM ||
+    (viewport.radiusMeters !== null && viewport.radiusMeters > MAX_REFRESH_RADIUS_METERS)
+  );
+
+  useEffect(() => {
+    if (!refreshMessage || refreshTooWide) return;
+    setRefreshMessage(null);
+  }, [refreshMessage, refreshTooWide]);
 
   const courts = useQuery({
-    queryKey: queryKeys.nearbyCourts(center.lat, center.lng, sport, keyword),
-    queryFn: () => api.nearbyCourts(center.lat, center.lng, sport, keyword || undefined),
+    queryKey: [...nearbyKey, refreshNonce] as const,
+    queryFn: () => api.nearbyCourts(
+      center.lat,
+      center.lng,
+      sport,
+      keyword || undefined,
+      searchRadius,
+    ),
     staleTime: 60 * 60 * 1000,
     enabled: !customEmpty,
   });
@@ -100,6 +155,25 @@ export function MapPage({ user }: { user: User | null }) {
   const reportMap = reports.data?.reports ?? {};
   const hasReport = (placeId: string) => !!reportMap[placeId];
 
+  function handleRefreshArea() {
+    if (!viewport || customEmpty) return;
+    if (viewport.zoom < MIN_REFRESH_ZOOM) {
+      setRefreshMessage('Zoom in to refresh this area.');
+      return;
+    }
+
+    const radius = clampRadius(viewport.radiusMeters);
+    if (radius && viewport.radiusMeters !== null && viewport.radiusMeters > MAX_REFRESH_RADIUS_METERS) {
+      setRefreshMessage('Zoom in to refresh this area.');
+      return;
+    }
+
+    setRefreshMessage(null);
+    setCenter(viewport.center);
+    setSearchRadius(radius);
+    setRefreshNonce((n) => n + 1);
+  }
+
   const pins: PinForMap[] = [
     ...placesPins.map((c) => {
       const s = savedById.get(c.placeId);
@@ -133,9 +207,14 @@ export function MapPage({ user }: { user: User | null }) {
           <SearchBar
             onPlaceSelected={(loc) => {
               setCenter({ lat: loc.lat, lng: loc.lng });
+              setSearchRadius(undefined);
+              setRefreshMessage(null);
               setKeyword('');
             }}
-            onKeywordChange={(k) => setKeyword(k)}
+            onKeywordChange={(k) => {
+              setKeyword(k);
+              setRefreshMessage(null);
+            }}
           />
         </div>
         <div className="pointer-events-auto">
@@ -154,16 +233,38 @@ export function MapPage({ user }: { user: User | null }) {
         pins={pins}
         selectedPlaceId={selectedPlaceId}
         onSelect={selectCourt}
+        onViewportChanged={setViewport}
         addMode={addMode}
         pendingPin={pendingPin}
         userLocation={userLocation}
         onMapClick={(loc) => setPendingPin(loc)}
       />
 
+      {!addMode && !customEmpty && refreshMovedArea && (
+        <div className="absolute top-[7.25rem] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
+          <button
+            onClick={handleRefreshArea}
+            disabled={courts.isFetching}
+            className="rounded-full bg-white/95 backdrop-blur border border-neutral-200 shadow-md px-3 py-1.5 text-xs font-semibold text-neutral-800 hover:bg-white disabled:opacity-70"
+          >
+            {courts.isFetching
+              ? 'Refreshing…'
+              : refreshTooWide
+                ? 'Zoom in to refresh'
+                : 'Refresh this area'}
+          </button>
+          {refreshMessage && (
+            <div className="rounded-full bg-neutral-900 text-white px-3 py-1 text-[11px] font-semibold shadow-md">
+              {refreshMessage}
+            </div>
+          )}
+        </div>
+      )}
+
       {!!user && <MapLegend />}
 
       {source === 'default' && !addMode && (
-        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 bg-white shadow-md border border-neutral-200 rounded-full px-4 py-1 text-[11px] text-neutral-600">
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 z-10 bg-white shadow-md border border-neutral-200 rounded-full px-4 py-1 text-[11px] text-neutral-600">
           Default location — enable location for nearby courts
         </div>
       )}
@@ -203,6 +304,8 @@ export function MapPage({ user }: { user: User | null }) {
         onLocate={(loc) => {
           setUserLocation(loc);
           setCenter(loc);
+          setSearchRadius(undefined);
+          setRefreshMessage(null);
         }}
       />
 

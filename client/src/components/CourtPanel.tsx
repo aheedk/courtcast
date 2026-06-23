@@ -133,7 +133,11 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
               {userScore && <PlayabilityBadge score={userScore} size="lg" />}
               <ForecastLabel />
               {detail.data.stale && (
-                <p className="mt-2 text-xs text-neutral-500">Showing last cached weather.</p>
+                <p className="mt-2 text-xs text-neutral-500">
+                  {detail.data.forecast
+                    ? 'Showing last cached weather.'
+                    : 'Weather is unavailable right now.'}
+                </p>
               )}
             </div>
 
