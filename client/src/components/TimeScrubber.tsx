@@ -71,10 +71,11 @@ export function TimeScrubber() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg px-4 py-3 border border-neutral-200 max-w-full overflow-x-clip">
+    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-neutral-900/10 px-4 py-3 border border-white/80 max-w-full overflow-x-clip">
       <div className="flex items-center justify-between mb-2">
         <div className="leading-tight">
-          <div className="text-sm font-bold text-neutral-900">{readout.primary}</div>
+          <div className="text-[11px] font-semibold text-neutral-500">Forecast</div>
+          <div className="text-sm font-bold text-neutral-950">{readout.primary}</div>
           {readout.secondary && (
             <div className="text-xs text-neutral-500">{readout.secondary}</div>
           )}
@@ -82,7 +83,7 @@ export function TimeScrubber() {
         {selectedMs !== null && (
           <button
             onClick={onNow}
-            className="text-xs font-semibold text-good hover:underline shrink-0"
+            className="text-xs font-semibold text-good hover:text-green-700 shrink-0 rounded-full border border-green-200 px-2.5 py-1 bg-green-50"
           >
             Now
           </button>

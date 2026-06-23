@@ -9,7 +9,7 @@ interface Props {
 
 export function SportChips({ value, onChange, sports = SPORTS }: Props) {
   return (
-    <div className="flex gap-2 justify-center flex-wrap">
+    <div className="flex gap-2 justify-center flex-wrap px-3">
       {sports.map((s) => {
         const active = s === value;
         return (
@@ -18,8 +18,8 @@ export function SportChips({ value, onChange, sports = SPORTS }: Props) {
             onClick={() => onChange(s)}
             className={
               active
-                ? 'bg-good text-white px-4 py-1.5 rounded-full text-xs font-semibold shadow-md'
-                : 'bg-white text-neutral-900 px-4 py-1.5 rounded-full text-xs font-semibold shadow-md hover:bg-neutral-50'
+                ? 'bg-good text-white px-4 py-1.5 rounded-full text-xs font-semibold shadow-md shadow-green-900/15 border border-good'
+                : 'bg-white/95 text-neutral-800 px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm border border-neutral-200 hover:bg-white hover:border-neutral-300'
             }
             aria-pressed={active}
           >

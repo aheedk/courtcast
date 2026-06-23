@@ -41,7 +41,7 @@ export function LocateMeButton({ onLocate }: Props) {
         onClick={handle}
         disabled={busy}
         aria-label="Show my location"
-        className="fixed bottom-44 right-4 z-30 w-11 h-11 rounded-full bg-white shadow-md border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+        className="fixed bottom-44 right-4 z-30 w-11 h-11 rounded-full bg-white/95 backdrop-blur-xl shadow-lg shadow-neutral-900/10 border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-white disabled:opacity-60"
       >
         {/* Crosshair / locate icon */}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -55,7 +55,7 @@ export function LocateMeButton({ onLocate }: Props) {
       {error && (
         <div
           role="status"
-          className="fixed bottom-56 right-4 z-30 max-w-[260px] bg-white border border-neutral-200 shadow-md rounded-xl px-3 py-2 text-xs text-neutral-700"
+          className="fixed bottom-56 right-4 z-30 max-w-[260px] bg-white border border-neutral-200 shadow-lg shadow-neutral-900/10 rounded-xl px-3 py-2 text-xs text-neutral-700"
         >
           {error}
         </div>
