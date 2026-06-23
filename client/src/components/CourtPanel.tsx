@@ -69,12 +69,12 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
     <aside
       className="
         fixed z-30 bg-white shadow-2xl border border-neutral-200
-        bottom-0 left-0 right-0 rounded-t-2xl max-h-[80vh] overflow-y-auto
+        bottom-28 left-0 right-0 rounded-t-2xl max-h-[calc(100dvh-11rem)] overflow-y-auto
         sm:bottom-auto sm:top-20 sm:right-4 sm:left-auto sm:rounded-2xl
         sm:w-[380px] sm:max-h-[calc(100vh-6rem)]
       "
     >
-      <div className="p-5 pb-28 sm:pb-5">
+      <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {renaming && savedEntry ? (
