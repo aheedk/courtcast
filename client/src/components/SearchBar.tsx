@@ -105,13 +105,13 @@ export function SearchBar({ onPlaceSelected, onKeywordChange, initialKeyword = '
 
   return (
     <div className="relative w-[90%] max-w-[560px] mx-auto">
-      <div className="flex items-center gap-2 bg-white/95 backdrop-blur-xl rounded-full shadow-lg shadow-neutral-900/10 border border-white/80 px-4 py-2.5">
+      <div className="flex items-center gap-2 bg-gradient-to-r from-white/95 via-emerald-50/95 to-sky-50/95 backdrop-blur-xl rounded-full shadow-lg shadow-emerald-950/10 border border-emerald-100/80 px-4 py-2.5">
         <svg
           width="18"
           height="18"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#525252"
+          stroke="#047857"
           strokeWidth="2"
           className="shrink-0"
           aria-hidden
@@ -129,16 +129,16 @@ export function SearchBar({ onPlaceSelected, onKeywordChange, initialKeyword = '
           placeholder={mode === 'place' ? 'Search a city or address…' : 'Filter by keyword (public, indoor…)'}
           className="flex-1 bg-transparent text-base sm:text-sm outline-none placeholder:text-neutral-400 min-w-0"
         />
-        <div className="flex bg-neutral-100 rounded-full p-0.5 text-xs font-semibold shrink-0 border border-neutral-200/70">
+        <div className="flex bg-white/65 rounded-full p-0.5 text-xs font-semibold shrink-0 border border-emerald-100/80">
           <button
             onClick={() => setMode('place')}
-            className={mode === 'place' ? 'bg-white text-neutral-950 px-3 py-1 rounded-full shadow-sm' : 'text-neutral-500 px-3 py-1'}
+            className={mode === 'place' ? 'bg-emerald-950 text-white px-3 py-1 rounded-full shadow-sm' : 'text-neutral-500 px-3 py-1'}
           >
             Place
           </button>
           <button
             onClick={() => setMode('keyword')}
-            className={mode === 'keyword' ? 'bg-white text-neutral-950 px-3 py-1 rounded-full shadow-sm' : 'text-neutral-500 px-3 py-1'}
+            className={mode === 'keyword' ? 'bg-emerald-950 text-white px-3 py-1 rounded-full shadow-sm' : 'text-neutral-500 px-3 py-1'}
           >
             Keyword
           </button>
@@ -146,7 +146,7 @@ export function SearchBar({ onPlaceSelected, onKeywordChange, initialKeyword = '
       </div>
 
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden">
+        <ul className="absolute z-10 left-0 right-0 mt-2 bg-gradient-to-b from-white to-emerald-50 rounded-2xl shadow-xl border border-emerald-100 overflow-hidden">
           {suggestions.map((s) => (
             <li key={s.placeId}>
               <button

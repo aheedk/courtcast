@@ -41,7 +41,7 @@ export function LocateMeButton({ onLocate }: Props) {
         onClick={handle}
         disabled={busy}
         aria-label="Show my location"
-        className="fixed bottom-44 right-4 z-30 w-11 h-11 rounded-full bg-white/95 backdrop-blur-xl shadow-lg shadow-neutral-900/10 border border-neutral-200 flex items-center justify-center text-neutral-700 hover:bg-white disabled:opacity-60"
+        className="fixed bottom-44 right-4 z-30 w-11 h-11 rounded-full bg-gradient-to-br from-white/95 via-sky-50/95 to-emerald-50/95 backdrop-blur-xl shadow-lg shadow-emerald-950/10 border border-emerald-100 flex items-center justify-center text-emerald-950 hover:from-white hover:to-emerald-50 disabled:opacity-60"
       >
         {/* Crosshair / locate icon */}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

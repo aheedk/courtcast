@@ -46,101 +46,108 @@ export function MyCourtsPage({ user }: { user: User }) {
   const reportMap = reports.data?.reports ?? {};
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pt-6 pb-24 overflow-x-hidden">
-      <h1 className="text-2xl font-bold mb-4">My Courts</h1>
+    <div className="min-h-[calc(100dvh-4rem)] bg-gradient-to-b from-emerald-50 via-sky-50/60 to-white overflow-x-hidden">
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-24">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-emerald-950">My Courts</h1>
+          <span className="shrink-0 rounded-full border border-emerald-100 bg-white/75 px-3 py-1 text-xs font-semibold text-emerald-800 shadow-sm">
+            {allCourts.length} saved
+          </span>
+        </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-5 -mx-1 px-1">
-        {tabs.map((t) => {
-          const active = t.value === tab;
-          return (
-            <button
-              key={t.value}
-              onClick={() => {
-                setTab(t.value);
-                setSelectedListId(null);
-              }}
-              className={
-                active
-                  ? 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-neutral-900 text-white'
-                  : 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-50'
-              }
-              aria-pressed={active}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1 mb-5 -mx-1 px-1">
+          {tabs.map((t) => {
+            const active = t.value === tab;
+            return (
+              <button
+                key={t.value}
+                onClick={() => {
+                  setTab(t.value);
+                  setSelectedListId(null);
+                }}
+                className={
+                  active
+                    ? 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-emerald-950 text-white shadow-md shadow-emerald-950/15'
+                    : 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/80 text-emerald-950 border border-emerald-100 hover:bg-white hover:border-emerald-200'
+                }
+                aria-pressed={active}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
 
-      {tab === 'custom' ? (
-        selectedListId ? (
-          <ListView listId={selectedListId} onBack={() => setSelectedListId(null)} />
+        {tab === 'custom' ? (
+          selectedListId ? (
+            <ListView listId={selectedListId} onBack={() => setSelectedListId(null)} />
+          ) : (
+            <>
+              <CustomSavesSection />
+              <section>
+                <h2 className="text-sm font-semibold text-emerald-700 uppercase mb-3">
+                  Your lists
+                </h2>
+                <ListsTab onSelectList={setSelectedListId} />
+              </section>
+            </>
+          )
         ) : (
           <>
-            <CustomSavesSection />
-            <section>
-              <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
-                Your lists
-              </h2>
-              <ListsTab onSelectList={setSelectedListId} />
-            </section>
+            {saved.isLoading && <p className="text-neutral-500">Loading your courts…</p>}
+            {saved.isError && <p className="text-bad">Couldn’t load your saved courts.</p>}
+
+            {saved.data && filtered.length === 0 && (
+              <div className="bg-gradient-to-br from-white via-emerald-50/80 to-sky-50/80 border border-dashed border-emerald-200 rounded-2xl p-10 text-center shadow-sm shadow-emerald-950/5">
+                <h2 className="font-semibold text-lg text-emerald-950 mb-1">
+                  {tab === 'all'
+                    ? 'No courts saved yet'
+                    : `No ${SPORT_LABEL[tab].toLowerCase()} courts saved yet`}
+                </h2>
+                <p className="text-neutral-600 mb-4">
+                  {tab === 'all'
+                    ? 'Open the map, tap a court, then “Save to My Courts.”'
+                    : `Switch to ${SPORT_EMOJI[tab]} ${SPORT_LABEL[tab]} on the map and save some.`}
+                </p>
+                <a
+                  href="/"
+                  className="inline-block px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-700 to-sky-700 text-white font-semibold shadow-md shadow-emerald-950/20"
+                >
+                  Browse the map
+                </a>
+              </div>
+            )}
+
+            {saved.data && filtered.length > 0 && (
+              <div className="grid gap-3">
+                {filtered.map((c) => (
+                  <SavedCourtCard
+                    key={`${c.placeId}:${c.sport}`}
+                    court={c}
+                    onSelect={selectCourt}
+                    report={reports.isSuccess ? (reportMap[c.placeId] ?? null) : undefined}
+                  />
+                ))}
+              </div>
+            )}
           </>
-        )
-      ) : (
-        <>
-          {saved.isLoading && <p className="text-neutral-500">Loading your courts…</p>}
-          {saved.isError && <p className="text-bad">Couldn’t load your saved courts.</p>}
+        )}
 
-          {saved.data && filtered.length === 0 && (
-            <div className="bg-white border border-dashed border-neutral-300 rounded-2xl p-10 text-center">
-              <h2 className="font-semibold text-lg mb-1">
-                {tab === 'all'
-                  ? 'No courts saved yet'
-                  : `No ${SPORT_LABEL[tab].toLowerCase()} courts saved yet`}
-              </h2>
-              <p className="text-neutral-500 mb-4">
-                {tab === 'all'
-                  ? 'Open the map, tap a court, then “Save to My Courts.”'
-                  : `Switch to ${SPORT_EMOJI[tab]} ${SPORT_LABEL[tab]} on the map and save some.`}
-              </p>
-              <a
-                href="/"
-                className="inline-block px-4 py-2 rounded-xl bg-neutral-900 text-white font-semibold"
-              >
-                Browse the map
-              </a>
-            </div>
-          )}
+        {selectedPlaceId && (
+          <CourtPanel
+            placeId={selectedPlaceId}
+            user={user}
+            onClose={() => selectCourt(null)}
+          />
+        )}
 
-          {saved.data && filtered.length > 0 && (
-            <div className="grid gap-3">
-              {filtered.map((c) => (
-                <SavedCourtCard
-                  key={`${c.placeId}:${c.sport}`}
-                  court={c}
-                  onSelect={selectCourt}
-                  report={reports.isSuccess ? (reportMap[c.placeId] ?? null) : undefined}
-                />
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {selectedPlaceId && (
-        <CourtPanel
-          placeId={selectedPlaceId}
-          user={user}
-          onClose={() => selectCourt(null)}
-        />
-      )}
-
-      {/* Persistent time slider, mirroring the MapPage layout. */}
-      {allCourts.length > 0 && (
-        <div className="fixed bottom-3 left-3 right-3 z-20 sm:max-w-3xl sm:left-1/2 sm:-translate-x-1/2 pointer-events-auto">
-          <TimeScrubber />
-        </div>
-      )}
+        {/* Persistent time slider, mirroring the MapPage layout. */}
+        {allCourts.length > 0 && (
+          <div className="fixed bottom-3 left-3 right-3 z-20 sm:max-w-3xl sm:left-1/2 sm:-translate-x-1/2 pointer-events-auto">
+            <TimeScrubber />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

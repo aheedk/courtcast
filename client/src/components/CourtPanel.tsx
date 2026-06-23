@@ -68,7 +68,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
   return (
     <aside
       className="
-        fixed z-30 bg-white shadow-2xl border border-neutral-200
+        fixed z-30 bg-gradient-to-b from-emerald-50 via-white to-white shadow-2xl shadow-emerald-950/20 border border-emerald-100
         bottom-28 left-0 right-0 rounded-t-2xl max-h-[calc(100dvh-11rem)] overflow-y-auto
         sm:bottom-auto sm:top-20 sm:right-4 sm:left-auto sm:rounded-2xl
         sm:w-[380px] sm:max-h-[calc(100vh-6rem)]
@@ -115,7 +115,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-neutral-400 hover:text-neutral-700 text-2xl leading-none shrink-0"
+            className="text-neutral-400 hover:text-neutral-700 hover:bg-white/80 rounded-full w-8 h-8 flex items-center justify-center text-2xl leading-none shrink-0"
           >
             ×
           </button>
@@ -167,7 +167,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
                     <button
                       onClick={() => unsave.mutate()}
                       disabled={unsave.isPending}
-                      className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
+                      className="w-full py-3 rounded-xl border border-emerald-100 bg-white/75 text-emerald-950 font-semibold hover:bg-white"
                     >
                       {unsave.isPending ? 'Removing…' : `Remove from ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
                     </button>
@@ -175,14 +175,14 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
                     <button
                       onClick={() => save.mutate()}
                       disabled={save.isPending}
-                      className="w-full py-3 rounded-xl bg-neutral-900 text-white font-semibold hover:bg-neutral-800"
+                      className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-700 to-sky-700 text-white font-semibold shadow-md shadow-emerald-950/20 hover:from-emerald-800 hover:to-sky-800"
                     >
                       {save.isPending ? 'Saving…' : `Save to ${SPORT_EMOJI[sport]} ${SPORT_LABEL[sport]}`}
                     </button>
                   )}
                   <button
                     onClick={() => setAddingToList(true)}
-                    className="w-full py-3 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50"
+                    className="w-full py-3 rounded-xl border border-emerald-100 bg-white/75 text-emerald-950 font-semibold hover:bg-white"
                   >
                     Add to list…
                   </button>

@@ -1,6 +1,6 @@
 export function MapLegend() {
   return (
-    <div className="absolute bottom-28 left-3 z-20 bg-white/95 backdrop-blur-xl rounded-lg shadow-lg shadow-neutral-900/10 border border-white/80 px-2.5 py-2 text-[10px] text-neutral-600 flex flex-col gap-1">
+    <div className="absolute bottom-28 left-3 z-20 bg-gradient-to-b from-white/95 via-emerald-50/95 to-sky-50/95 backdrop-blur-xl rounded-lg shadow-lg shadow-emerald-950/10 border border-emerald-100/80 px-2.5 py-2 text-[10px] text-neutral-600 flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1">
           <span className="inline-block w-2 h-2 rounded-full bg-neutral-500" />

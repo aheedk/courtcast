@@ -71,11 +71,11 @@ export function TimeScrubber() {
   }
 
   return (
-    <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-neutral-900/10 px-4 py-3 border border-white/80 max-w-full overflow-x-clip">
+    <div className="bg-gradient-to-r from-white/95 via-emerald-50/95 to-sky-50/95 backdrop-blur-xl rounded-2xl shadow-xl shadow-emerald-950/10 px-4 py-3 border border-emerald-100/80 max-w-full overflow-x-clip">
       <div className="flex items-center justify-between mb-2">
         <div className="leading-tight">
-          <div className="text-[11px] font-semibold text-neutral-500">Forecast</div>
-          <div className="text-sm font-bold text-neutral-950">{readout.primary}</div>
+          <div className="text-[11px] font-semibold text-emerald-700">Forecast</div>
+          <div className="text-sm font-bold text-emerald-950">{readout.primary}</div>
           {readout.secondary && (
             <div className="text-xs text-neutral-500">{readout.secondary}</div>
           )}
@@ -98,7 +98,7 @@ export function TimeScrubber() {
         value={bucket}
         onChange={onChange}
         aria-label="Forecast time"
-        className="w-full accent-good"
+        className="w-full accent-emerald-600"
       />
 
       <div className="relative h-3 mt-1">
