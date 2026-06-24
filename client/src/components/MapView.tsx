@@ -19,12 +19,19 @@ export interface MapViewport {
   radiusMeters: number | null;
 }
 
+export interface MapZoomRequest {
+  id: number;
+  zoom: number;
+  center: { lat: number; lng: number };
+}
+
 interface Props {
   center: { lat: number; lng: number };
   pins: PinForMap[];
   selectedPlaceId: string | null;
   onSelect: (placeId: string) => void;
   onViewportChanged?: (viewport: MapViewport) => void;
+  zoomRequest?: MapZoomRequest | null;
   addMode?: boolean;
   onMapClick?: (loc: { lat: number; lng: number }) => void;
   pendingPin?: { lat: number; lng: number } | null;
@@ -147,6 +154,7 @@ export function MapView({
   selectedPlaceId,
   onSelect,
   onViewportChanged,
+  zoomRequest,
   addMode = false,
   onMapClick,
   pendingPin,
@@ -183,6 +191,12 @@ export function MapView({
       mapRef.current.panTo(memoCenter);
     }
   }, [memoCenter]);
+
+  useEffect(() => {
+    if (!mapRef.current || !zoomRequest) return;
+    mapRef.current.panTo(zoomRequest.center);
+    mapRef.current.setZoom(zoomRequest.zoom);
+  }, [zoomRequest]);
 
   if (loadError) {
     return (

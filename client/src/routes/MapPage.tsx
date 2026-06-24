@@ -33,6 +33,18 @@ function clampRadius(radiusMeters: number | null): number | undefined {
   );
 }
 
+function zoomForRefresh(viewport: MapViewport): number {
+  const zoomForMin = Math.max(viewport.zoom, MIN_REFRESH_ZOOM);
+  if (viewport.radiusMeters === null || viewport.radiusMeters <= MAX_REFRESH_RADIUS_METERS) {
+    return zoomForMin;
+  }
+
+  const zoomIncrease = Math.ceil(
+    Math.log2(viewport.radiusMeters / MAX_REFRESH_RADIUS_METERS),
+  );
+  return Math.ceil(Math.max(zoomForMin, viewport.zoom + zoomIncrease));
+}
+
 export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
   const { selectedPlaceId, selectCourt } = useUi();
@@ -52,6 +64,8 @@ export function MapPage({ user }: { user: User | null }) {
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
+  const [zoomRequest, setZoomRequest] = useState<{ id: number; zoom: number; center: { lat: number; lng: number } } | null>(null);
+  const [refreshAfterZoom, setRefreshAfterZoom] = useState(false);
   // Captured GPS position from the locate-me button. Re-set on each tap;
   // the marker stays at the captured spot when the map is panned away.
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -67,6 +81,12 @@ export function MapPage({ user }: { user: User | null }) {
     if (!refreshMessage || refreshTooWide) return;
     setRefreshMessage(null);
   }, [refreshMessage, refreshTooWide]);
+
+  useEffect(() => {
+    if (!refreshAfterZoom || !viewport || refreshTooWide || customEmpty) return;
+    refreshViewport(viewport);
+    setRefreshAfterZoom(false);
+  }, [customEmpty, refreshAfterZoom, refreshTooWide, viewport]);
 
   const courts = useQuery({
     queryKey: [...nearbyKey, refreshNonce] as const,
@@ -132,23 +152,28 @@ export function MapPage({ user }: { user: User | null }) {
   const reportMap = reports.data?.reports ?? {};
   const hasReport = (placeId: string) => !!reportMap[placeId];
 
+  function refreshViewport(nextViewport: MapViewport) {
+    setRefreshMessage(null);
+    setCenter(nextViewport.center);
+    setSearchRadius(clampRadius(nextViewport.radiusMeters));
+    setRefreshNonce((n) => n + 1);
+  }
+
   function handleRefreshArea() {
     if (!viewport || customEmpty) return;
-    if (viewport.zoom < MIN_REFRESH_ZOOM) {
-      setRefreshMessage('Zoom in to refresh this area.');
-      return;
-    }
-
     const radius = clampRadius(viewport.radiusMeters);
-    if (radius && viewport.radiusMeters !== null && viewport.radiusMeters > MAX_REFRESH_RADIUS_METERS) {
-      setRefreshMessage('Zoom in to refresh this area.');
+    if (refreshTooWide) {
+      setRefreshMessage(null);
+      setRefreshAfterZoom(true);
+      setZoomRequest({
+        id: Date.now(),
+        zoom: zoomForRefresh(viewport),
+        center: viewport.center,
+      });
       return;
     }
 
-    setRefreshMessage(null);
-    setCenter(viewport.center);
-    setSearchRadius(radius);
-    setRefreshNonce((n) => n + 1);
+    refreshViewport({ ...viewport, radiusMeters: radius ?? viewport.radiusMeters });
   }
 
   const pins: PinForMap[] = [
@@ -186,11 +211,13 @@ export function MapPage({ user }: { user: User | null }) {
               setCenter({ lat: loc.lat, lng: loc.lng });
               setSearchRadius(undefined);
               setRefreshMessage(null);
+              setRefreshAfterZoom(false);
               setKeyword('');
             }}
             onKeywordChange={(k) => {
               setKeyword(k);
               setRefreshMessage(null);
+              setRefreshAfterZoom(false);
             }}
           />
         </div>
@@ -211,6 +238,7 @@ export function MapPage({ user }: { user: User | null }) {
         selectedPlaceId={selectedPlaceId}
         onSelect={selectCourt}
         onViewportChanged={setViewport}
+        zoomRequest={zoomRequest}
         addMode={addMode}
         pendingPin={pendingPin}
         userLocation={userLocation}
@@ -226,12 +254,14 @@ export function MapPage({ user }: { user: User | null }) {
         <div className="absolute top-[7.25rem] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-auto">
           <button
             onClick={handleRefreshArea}
-            disabled={courts.isFetching || !viewport}
+            disabled={courts.isFetching || !viewport || refreshAfterZoom}
             className="rounded-full bg-gradient-to-r from-white/95 via-amber-50/95 to-emerald-50/95 backdrop-blur border border-emerald-100 shadow-md shadow-emerald-950/10 px-3 py-1.5 text-xs font-semibold text-emerald-950 hover:from-white hover:to-emerald-50 disabled:opacity-70"
           >
             {courts.isFetching
               ? 'Refreshing…'
-              : refreshTooWide
+              : refreshAfterZoom
+                ? 'Zooming…'
+                : refreshTooWide
                 ? 'Zoom in to refresh'
                 : 'Refresh this area'}
           </button>
@@ -288,6 +318,7 @@ export function MapPage({ user }: { user: User | null }) {
           setCenter(loc);
           setSearchRadius(undefined);
           setRefreshMessage(null);
+          setRefreshAfterZoom(false);
         }}
       />
 
