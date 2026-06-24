@@ -30,7 +30,7 @@ thresholds**.
 | Client | Vite + React 18 + TypeScript + TailwindCSS, TanStack Query, Google Maps JS + Places, vite-plugin-pwa, Capacitor iOS |
 | Server | Node 20 + Express + TypeScript + Prisma |
 | DB | PostgreSQL (Docker locally; Railway-managed in prod) |
-| Auth | Google Sign-In (Identity Services) → server-side ID token verification → HTTP-only `cc_session` cookie |
+| Auth | Google Sign-In on web and Sign in with Apple on iOS → server-side ID token verification → HTTP-only `cc_session` cookie |
 | Weather | Open-Meteo (hourly, 48h, no key) — default; OpenWeatherMap (5-day/3-hour, interpolated to hourly) as automatic fallback when configured. Geohash-5 cached 1 hour via `weather.ts` dispatcher. |
 | Places | Google Maps Places Nearby Search (geohash-4 cached 7 days) |
 
@@ -102,11 +102,13 @@ These need to be set on the Railway server service:
 | `CLIENT_ORIGIN` | `https://courtclimate.com` (also accepts `*.up.railway.app`) |
 | `CLIENT_ORIGINS` | Optional comma-separated allow-list. For bundled native iOS API calls, set `https://courtclimate.com,capacitor://localhost,ionic://localhost` |
 | `GOOGLE_OAUTH_CLIENT_ID` | Same as client side |
+| `APPLE_CLIENT_ID` | iOS Sign in with Apple audience. Defaults to `com.courtclimate.app` |
 | `GOOGLE_PLACES_KEY` | **Server-side key** with no application restriction (browser-restricted key won't work for server fetch) |
 | `OPENWEATHER_KEY` | OWM free-tier key. Required when `WEATHER_PROVIDER=openweather`; optional but recommended as fallback for Open-Meteo rate limits. |
 
 The client-side env vars (`VITE_GOOGLE_MAPS_KEY`,
-`VITE_GOOGLE_OAUTH_CLIENT_ID`, optional `VITE_API_BASE_URL`) are baked into the Vite build — set
+`VITE_GOOGLE_OAUTH_CLIENT_ID`, `VITE_APPLE_CLIENT_ID`,
+`VITE_APPLE_REDIRECT_URI`, optional `VITE_API_BASE_URL`) are baked into the Vite build — set
 them on Railway's *server* service since the build runs there.
 
 ## iOS / TestFlight

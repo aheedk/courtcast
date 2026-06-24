@@ -36,6 +36,7 @@ export const env = {
   nodeEnv: optional('NODE_ENV', 'development'),
   databaseUrl: required('DATABASE_URL'),
   googleOauthClientId: required('GOOGLE_OAUTH_CLIENT_ID'),
+  appleClientId: optional('APPLE_CLIENT_ID', 'com.courtclimate.app'),
   googlePlacesKey: required('GOOGLE_PLACES_KEY'),
   openweatherKey: process.env.OPENWEATHER_KEY ?? '', // Required for OpenWeather primary, optional fallback otherwise
   weatherProvider: weatherProvider(),

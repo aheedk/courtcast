@@ -42,6 +42,13 @@ export const api = {
   me: () => request<{ user: User }>('/api/auth/me'),
   loginWithGoogle: (idToken: string) =>
     request<{ user: User }>('/api/auth/google', { method: 'POST', body: JSON.stringify({ idToken }) }),
+  loginWithApple: (input: {
+    identityToken: string;
+    email?: string | null;
+    givenName?: string | null;
+    familyName?: string | null;
+  }) =>
+    request<{ user: User }>('/api/auth/apple', { method: 'POST', body: JSON.stringify(input) }),
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
   nearbyCourts: (lat: number, lng: number, sport: Sport, keyword?: string, radius?: number) => {

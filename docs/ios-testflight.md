@@ -33,10 +33,11 @@ In Xcode:
 1. Select the `App` target.
 2. Set the Team.
 3. Confirm bundle identifier `com.courtclimate.app`.
-4. Set the version and build number.
-5. Choose `Any iOS Device (arm64)`.
-6. Use `Product > Archive`.
-7. Distribute to App Store Connect, then enable the build in TestFlight.
+4. Confirm `Signing & Capabilities` includes Sign in with Apple.
+5. Set the version and build number.
+6. Choose `Any iOS Device (arm64)`.
+7. Use `Product > Archive`.
+8. Distribute to App Store Connect, then enable the build in TestFlight.
 
 ## Bundled Native Build
 
@@ -58,6 +59,7 @@ Before using bundled native builds in production, set the server env:
 
 ```bash
 CLIENT_ORIGINS=https://courtclimate.com,capacitor://localhost,ionic://localhost
+APPLE_CLIENT_ID=com.courtclimate.app
 ```
 
 The bundled path may also need Google Cloud key updates because the app runs from Capacitor's local iOS origin instead of `https://courtclimate.com`.
@@ -67,4 +69,5 @@ The bundled path may also need Google Cloud key updates because the app runs fro
 - `CAPACITOR_SERVER_URL=https://courtclimate.com` is only used by `npm run ios:sync:hosted`.
 - The website remains the source of truth; normal web deploys still use the existing Railway flow.
 - iOS location permission is declared in `client/ios/App/App/Info.plist` because the map uses the user's location to find nearby courts.
-- Long term, native Google Sign-In and native map rendering would make this feel less like a web shell, but they are not required for the first internal TestFlight.
+- Native iOS Sign in with Apple is enabled through `client/ios/App/App/App.entitlements`.
+- Long term, native map rendering would make this feel less like a web shell, but it is not required for the first internal TestFlight.
