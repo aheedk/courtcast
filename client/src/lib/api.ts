@@ -13,9 +13,15 @@ import type {
   CourtCondition,
   CourtVisibility,
 } from '../types';
+import { env } from './env';
+
+function apiUrl(path: string): string {
+  if (!env.apiBaseUrl) return path;
+  return `${env.apiBaseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(apiUrl(path), {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
     ...init,

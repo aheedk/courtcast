@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { CookieOptions, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { verifyGoogleIdToken } from '../lib/google';
@@ -10,6 +11,28 @@ const router = Router();
 const loginSchema = z.object({ idToken: z.string().min(10) });
 
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isNativeOrigin(req: Request): boolean {
+  const origin = req.get('origin');
+  return origin === 'capacitor://localhost' || origin === 'ionic://localhost';
+}
+
+function sessionCookieOptions(req: Request): CookieOptions {
+  const nativeOrigin = isNativeOrigin(req);
+
+  return {
+    httpOnly: true,
+    sameSite: nativeOrigin ? 'none' : 'lax',
+    secure: nativeOrigin ? true : isProd,
+    maxAge: SESSION_MAX_AGE_MS,
+    path: '/',
+  };
+}
+
+function clearSessionCookieOptions(req: Request): CookieOptions {
+  const { maxAge: _maxAge, ...options } = sessionCookieOptions(req);
+  return options;
+}
 
 router.post('/google', async (req, res, next) => {
   try {
@@ -29,13 +52,7 @@ router.post('/google', async (req, res, next) => {
       },
     });
 
-    res.cookie(SESSION_COOKIE, session.id, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      maxAge: SESSION_MAX_AGE_MS,
-      path: '/',
-    });
+    res.cookie(SESSION_COOKIE, session.id, sessionCookieOptions(req));
 
     res.json({
       user: {
@@ -60,12 +77,7 @@ router.post('/logout', async (req, res, next) => {
     // defaults can mismatch (secure/sameSite) and leave the cookie in
     // the browser. Even if cookie removal fails, the session row is
     // already deleted above so /api/auth/me will 401 next request.
-    res.clearCookie(SESSION_COOKIE, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-    });
+    res.clearCookie(SESSION_COOKIE, clearSessionCookieOptions(req));
     res.status(204).end();
   } catch (err) {
     next(err);

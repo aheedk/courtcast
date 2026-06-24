@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import cors from 'cors';
+import type { CorsOptions } from 'cors';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { env } from './lib/env';
@@ -23,7 +24,18 @@ export function createApp() {
   // req.ip reflect the original client request, not the internal hop.
   app.set('trust proxy', 1);
 
-  app.use(cors({ origin: env.clientOrigin, credentials: true }));
+  const corsOptions: CorsOptions = {
+    origin(origin, callback) {
+      if (!origin || env.clientOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
+    credentials: true,
+  };
+
+  app.use(cors(corsOptions));
   app.use(express.json({ limit: '64kb' }));
   app.use(cookieParser());
   app.use(loadSession);

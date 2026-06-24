@@ -27,7 +27,7 @@ thresholds**.
 
 | Layer | Tech |
 |---|---|
-| Client | Vite + React 18 + TypeScript + TailwindCSS, TanStack Query, Google Maps JS + Places, vite-plugin-pwa |
+| Client | Vite + React 18 + TypeScript + TailwindCSS, TanStack Query, Google Maps JS + Places, vite-plugin-pwa, Capacitor iOS |
 | Server | Node 20 + Express + TypeScript + Prisma |
 | DB | PostgreSQL (Docker locally; Railway-managed in prod) |
 | Auth | Google Sign-In (Identity Services) → server-side ID token verification → HTTP-only `cc_session` cookie |
@@ -100,13 +100,20 @@ These need to be set on the Railway server service:
 | `DATABASE_URL` | Reference variable from the Postgres add-on |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
 | `CLIENT_ORIGIN` | `https://courtclimate.com` (also accepts `*.up.railway.app`) |
+| `CLIENT_ORIGINS` | Optional comma-separated allow-list. For bundled native iOS API calls, set `https://courtclimate.com,capacitor://localhost,ionic://localhost` |
 | `GOOGLE_OAUTH_CLIENT_ID` | Same as client side |
 | `GOOGLE_PLACES_KEY` | **Server-side key** with no application restriction (browser-restricted key won't work for server fetch) |
 | `OPENWEATHER_KEY` | OWM free-tier key. Required when `WEATHER_PROVIDER=openweather`; optional but recommended as fallback for Open-Meteo rate limits. |
 
 The client-side env vars (`VITE_GOOGLE_MAPS_KEY`,
-`VITE_GOOGLE_OAUTH_CLIENT_ID`) are baked into the Vite build — set
+`VITE_GOOGLE_OAUTH_CLIENT_ID`, optional `VITE_API_BASE_URL`) are baked into the Vite build — set
 them on Railway's *server* service since the build runs there.
+
+## iOS / TestFlight
+
+The native iOS wrapper lives under `client/ios` and is managed by
+Capacitor. See [`docs/ios-testflight.md`](./docs/ios-testflight.md) for
+the Xcode/TestFlight flow.
 
 ## Project layout
 

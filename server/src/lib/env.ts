@@ -10,6 +10,13 @@ function optional(name: string, fallback: string): string {
   return process.env[name] ?? fallback;
 }
 
+function csv(name: string, fallback: string): string[] {
+  return optional(name, fallback)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export type WeatherProvider = 'open-meteo' | 'openweather';
 
 function weatherProvider(): WeatherProvider {
@@ -20,9 +27,12 @@ function weatherProvider(): WeatherProvider {
   return v;
 }
 
+const clientOrigin = optional('CLIENT_ORIGIN', 'http://localhost:5173');
+
 export const env = {
   port: parseInt(optional('PORT', '4000'), 10),
-  clientOrigin: optional('CLIENT_ORIGIN', 'http://localhost:5173'),
+  clientOrigin,
+  clientOrigins: csv('CLIENT_ORIGINS', clientOrigin),
   nodeEnv: optional('NODE_ENV', 'development'),
   databaseUrl: required('DATABASE_URL'),
   googleOauthClientId: required('GOOGLE_OAUTH_CLIENT_ID'),
