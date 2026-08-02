@@ -1,19 +1,9 @@
 import type { Forecast, ForecastSlot } from '../types';
 
 /**
- * The TimeScrubber slider moves in 2-hour buckets across the 48-hour
- * forecast. When the user lands on a bucket — say "Sat 4pm" — that
- * choice really represents the 2-hour window starting there (4pm-6pm).
- * Code that asks "what's the rain looking like at the selected time?"
- * should use this constant as the window size for max-over-window
- * lookups so the answer matches the slider's mental model.
- */
-export const SLIDER_STEP_HOURS = 2;
-
-/**
- * Returns the slot whose `ts` is closest to `timeMs`, snapping within
- * ±30 minutes (since slots are 1h apart, any time inside the forecast
- * window will be within 30 min of the nearest slot).
+ * Returns the weather at `timeMs`. Exact hourly slots are returned as-is;
+ * half-hour selections are linearly interpolated between their neighboring
+ * hourly samples.
  *
  * - If `forecast` is null/empty → returns null.
  * - If `timeMs` is null → returns slots[0] (the "now" slot).
@@ -26,17 +16,47 @@ export function slotAt(
   if (!forecast || forecast.slots.length === 0) return null;
   if (timeMs === null) return forecast.slots[0];
 
-  let closest: ForecastSlot | null = null;
-  let minDiff = Infinity;
-  for (const slot of forecast.slots) {
-    const diff = Math.abs(slot.ts - timeMs);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = slot;
+  const slots = forecast.slots;
+  const first = slots[0];
+  const last = slots[slots.length - 1];
+  const slack = 30 * 60_000;
+  if (timeMs < first.ts - slack || timeMs > last.ts + slack) return null;
+  if (timeMs <= first.ts) return first;
+  if (timeMs >= last.ts) return last;
+
+  for (let i = 0; i < slots.length - 1; i++) {
+    const before = slots[i];
+    const after = slots[i + 1];
+    if (timeMs === before.ts) return before;
+    if (timeMs > before.ts && timeMs < after.ts) {
+      const fraction = (timeMs - before.ts) / (after.ts - before.ts);
+      return interpolateSlot(before, after, timeMs, fraction);
     }
   }
-  if (minDiff > 30 * 60_000) return null; // outside window
-  return closest;
+  return null;
+}
+
+function interpolateSlot(before: ForecastSlot, after: ForecastSlot, ts: number, fraction: number): ForecastSlot {
+  const required = (a: number, b: number) => Math.round(a + (b - a) * fraction);
+  const optional = (a?: number, b?: number, decimals = 0) => {
+    if (a === undefined && b === undefined) return undefined;
+    if (a === undefined) return b;
+    if (b === undefined) return a;
+    const value = a + (b - a) * fraction;
+    return decimals ? Number(value.toFixed(decimals)) : Math.round(value);
+  };
+  return {
+    ts,
+    tempF: required(before.tempF, after.tempF),
+    windMph: required(before.windMph, after.windMph),
+    rainPct: required(before.rainPct, after.rainPct),
+    apparentTempF: optional(before.apparentTempF, after.apparentTempF),
+    humidityPct: optional(before.humidityPct, after.humidityPct),
+    windGustMph: optional(before.windGustMph, after.windGustMph),
+    precipitationIn: optional(before.precipitationIn, after.precipitationIn, 3),
+    uvIndex: optional(before.uvIndex, after.uvIndex, 1),
+    solarRadiationWm2: optional(before.solarRadiationWm2, after.solarRadiationWm2),
+  };
 }
 
 /**

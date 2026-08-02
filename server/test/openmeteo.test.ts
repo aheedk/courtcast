@@ -45,7 +45,9 @@ describe('fetchOpenMeteoForecast', () => {
     expect(url).toMatch(/api\.open-meteo\.com\/v1\/forecast/);
     expect(url).toContain('latitude=40');
     expect(url).toContain('longitude=-74');
-    expect(url).toContain('forecast_hours=48');
+    expect(url).toContain('forecast_hours=168');
+    expect(url).toContain('apparent_temperature');
+    expect(url).toContain('uv_index');
     expect(url).toContain('temperature_unit=fahrenheit');
     expect(url).toContain('wind_speed_unit=mph');
   });

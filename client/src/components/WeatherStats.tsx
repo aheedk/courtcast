@@ -1,7 +1,8 @@
 import type { Forecast, CourtReport } from '../types';
-import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
+import { slotAt, rainPctOverWindow } from '../lib/forecast';
 import { reportSummary } from '../lib/reportSummary';
 import { useSelectedTime } from '../stores/selectedTime';
+import { useForecastStep } from '../stores/forecastStep';
 
 interface Props {
   forecast: Forecast | null;
@@ -22,9 +23,10 @@ function relativeTime(iso: string): string {
 
 export function WeatherStats({ forecast, compact = false, report = null }: Props) {
   const [selectedMs] = useSelectedTime();
+  const [stepHours] = useForecastStep();
   const slot = slotAt(forecast, selectedMs);
   const rainPct = selectedMs !== null
-    ? (rainPctOverWindow(forecast, selectedMs, SLIDER_STEP_HOURS) ?? slot?.rainPct ?? null)
+    ? (rainPctOverWindow(forecast, selectedMs, stepHours) ?? slot?.rainPct ?? null)
     : (slot?.rainPct ?? null);
 
   // 3 weather columns; Status (when present) joins as a 4th column on

@@ -57,12 +57,29 @@ export interface Court {
   stale?: boolean;
   weather?: WeatherSummary | null;
   forecast?: Forecast | null;
+  facts?: CourtFacts | null;
+  factsUpdatedAt?: string | null;
+}
+
+export interface CourtFacts {
+  surface?: 'hard' | 'clay' | 'grass' | 'asphalt' | 'concrete' | 'wood' | 'turf' | 'other' | null;
+  courtCount?: number | null;
+  hasLights?: boolean | null;
+  indoor?: boolean | null;
+  access?: 'free' | 'paid' | 'members' | 'reservation' | 'unknown' | null;
+  hours?: string | null;
+  amenities?: string[];
+  bookingUrl?: string | null;
 }
 
 export interface WeatherSummary {
   tempF: number;
   windMph: number;
   rainPctNext2h: number;
+  apparentTempF?: number;
+  humidityPct?: number;
+  windGustMph?: number;
+  uvIndex?: number;
 }
 
 export interface ForecastSlot {
@@ -70,6 +87,12 @@ export interface ForecastSlot {
   tempF: number;
   windMph: number;
   rainPct: number;  // 0..100
+  apparentTempF?: number;
+  humidityPct?: number;
+  windGustMph?: number;
+  precipitationIn?: number;
+  uvIndex?: number;
+  solarRadiationWm2?: number;
 }
 
 export interface Forecast {
@@ -100,6 +123,38 @@ export interface CourtReport {
   openCourts: OpenCourts | null;
   condition: CourtCondition | null;
   createdAt: string; // ISO8601 from server
+  reportCount?: number;
+  confidence?: 'low' | 'medium' | 'high';
+  agreementPct?: number;
+  conditionCounts?: Partial<Record<CourtCondition, number>>;
+  openCourtsCounts?: Partial<Record<OpenCourts, number>>;
+}
+
+export interface CourtChatMessage {
+  id: string;
+  placeId: string;
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  user: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+}
+
+export interface AppNotification {
+  id: string;
+  type: 'playable' | 'report' | 'plan' | 'chat' | string;
+  title: string;
+  body: string;
+  placeId: string | null;
+  planId: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPreferences {
+  playableAlerts: boolean;
+  reportAlerts: boolean;
+  chatAlerts: boolean;
+  browserAlerts: boolean;
 }
 
 export interface SavedCourtDetail extends Court {

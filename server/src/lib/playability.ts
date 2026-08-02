@@ -4,6 +4,10 @@ export interface WeatherSummary {
   tempF: number;
   windMph: number;
   rainPctNext2h: number;
+  apparentTempF?: number;
+  humidityPct?: number;
+  windGustMph?: number;
+  uvIndex?: number;
 }
 
 /**
@@ -15,8 +19,13 @@ export interface WeatherSummary {
  * wind==25 → BAD (wind uses >= so 25 mph is unplayable).
  */
 export function score(weather: WeatherSummary): PlayabilityScore {
-  const { rainPctNext2h, windMph } = weather;
-  if (rainPctNext2h > 60 || windMph >= 25) return 'BAD';
+  const { rainPctNext2h, windMph, apparentTempF, windGustMph } = weather;
+  if (
+    rainPctNext2h > 60 ||
+    windMph >= 25 ||
+    (windGustMph !== undefined && windGustMph >= 35) ||
+    (apparentTempF !== undefined && apparentTempF >= 105)
+  ) return 'BAD';
   if (rainPctNext2h < 30 && windMph < 15) return 'GOOD';
   return 'OK';
 }

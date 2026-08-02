@@ -14,6 +14,9 @@ import { AddToListMenu } from './AddToListMenu';
 import { LatestReport } from './LatestReport';
 import { ReportStatusForm } from './ReportStatusForm';
 import { VisibilityPill } from './VisibilityPill';
+import { CourtInsights } from './CourtInsights';
+import { CourtFactsCard } from './CourtFactsCard';
+import { CourtChat } from './CourtChat';
 
 interface Props {
   placeId: string;
@@ -145,6 +148,16 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
 
             <LatestReport placeId={placeId} />
 
+            <CourtInsights
+              placeId={placeId}
+              forecast={detail.data.forecast ?? null}
+              sport={sport}
+            />
+
+            <CourtFactsCard court={detail.data.court} canEdit={!!user} />
+
+            <CourtChat placeId={placeId} user={user} />
+
             {detail.data.court.isCustom &&
               user &&
               detail.data.court.addedByUserId === user.id &&
@@ -156,7 +169,7 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
               )}
 
             <div className="mt-6 flex flex-col gap-2">
-              {user && <ReportStatusForm placeId={placeId} />}
+              {user && <ReportStatusForm placeId={placeId} courtName={displayName} />}
               {!user ? (
                 <p className="text-sm text-neutral-500">
                   <a href="/login" className="text-good underline">Sign in</a> to save this court or report status.

@@ -18,6 +18,7 @@ export function scoreFromThresholds(
   weather: WeatherSummary,
   t: Thresholds,
 ): PlayabilityScore {
+  if ((weather.apparentTempF ?? weather.tempF) >= 105 || (weather.windGustMph ?? 0) >= 35) return 'BAD';
   if (weather.rainPctNext2h >= t.rainMaxOk || weather.windMph >= t.windMaxOk) return 'BAD';
   if (weather.rainPctNext2h < t.rainMaxGood && weather.windMph < t.windMaxGood) {
     return 'GOOD';

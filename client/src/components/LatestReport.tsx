@@ -6,8 +6,6 @@ import type { CourtReport } from '../types';
 
 interface Props {
   placeId: string;
-  /** When provided, this is used directly instead of firing a per-place query.
-   *  Used by callers that already pulled a batch (saved-card lists, map page). */
   report?: CourtReport | null;
   compact?: boolean;
 }
@@ -17,41 +15,38 @@ function relativeTime(iso: string): string {
   if (ms < 60_000) return 'just now';
   if (ms < 60 * 60_000) return `${Math.floor(ms / 60_000)} min ago`;
   if (ms < 24 * 60 * 60_000) return `${Math.floor(ms / (60 * 60_000))} hr ago`;
-  // Server filters >24h, but be safe.
   return new Date(iso).toLocaleString();
 }
 
 export function LatestReport({ placeId, report, compact = false }: Props) {
-  const enabled = report === undefined;
   const fetched = useQuery({
     queryKey: queryKeys.courtReport(placeId),
     queryFn: () => api.courtReport(placeId),
-    enabled,
+    enabled: report === undefined,
     staleTime: 60_000,
   });
-
-  // Server returns 204 → api returns undefined → treat as "no report".
   const r: CourtReport | null = report !== undefined ? report : (fetched.data ?? null);
   if (!r) return null;
-
   const summary = reportSummary(r);
   const when = relativeTime(r.createdAt);
 
-  if (compact) {
-    return (
-      <p className="text-xs text-neutral-500">
-        {summary} · <span className="text-neutral-400">{when}</span>
-      </p>
-    );
-  }
+  if (compact) return (
+    <p className="text-xs text-neutral-500">
+      {summary} · <span className="text-neutral-400">{when}</span>
+      {r.reportCount && r.reportCount > 1 ? <span className="ml-1 font-semibold text-emerald-700">· {r.reportCount} reports</span> : null}
+    </p>
+  );
 
   return (
-    <div className="mt-4 border-t border-neutral-200 pt-3 flex items-baseline justify-between gap-3">
+    <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-neutral-200 pt-3">
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Status</p>
-        <p className="text-lg font-semibold text-neutral-900 truncate">{summary}</p>
+        <p className="text-[11px] uppercase tracking-wide text-neutral-500">Community status</p>
+        <p className="truncate text-lg font-semibold text-neutral-900">{summary}</p>
       </div>
-      <p className="text-xs text-neutral-400 shrink-0">{when}</p>
+      <div className="shrink-0 text-right">
+        <p className="text-xs text-neutral-400">{when}</p>
+        {r.confidence && <p className={`text-[11px] font-semibold ${r.confidence === 'high' ? 'text-emerald-700' : r.confidence === 'medium' ? 'text-amber-700' : 'text-neutral-500'}`}>{r.confidence} confidence{r.reportCount ? ` · ${r.reportCount}` : ''}</p>}
+      </div>
     </div>
   );
 }

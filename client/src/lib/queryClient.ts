@@ -24,6 +24,9 @@ export const queryKeys = {
   // share the same cache entry.
   courtReportsBatch: (placeIds: string[]) =>
     ['courtReportsBatch', [...placeIds].sort().join(',')] as const,
+  courtMessages: (placeId: string) => ['courtMessages', placeId] as const,
+  notifications: ['notifications'] as const,
+  notificationPreferences: ['notificationPreferences'] as const,
 };
 
 function round(n: number) {

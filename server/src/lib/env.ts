@@ -13,8 +13,12 @@ function optional(name: string, fallback: string): string {
 function csv(name: string, fallback: string): string[] {
   return optional(name, fallback)
     .split(',')
-    .map((item) => item.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
+}
+
+function normalizeOrigin(item: string): string {
+  return item.trim().replace(/\/+$/, '');
 }
 
 export type WeatherProvider = 'open-meteo' | 'openweather';
@@ -27,7 +31,7 @@ function weatherProvider(): WeatherProvider {
   return v;
 }
 
-const clientOrigin = optional('CLIENT_ORIGIN', 'http://localhost:5173');
+const clientOrigin = normalizeOrigin(optional('CLIENT_ORIGIN', 'http://localhost:5173'));
 
 export const env = {
   port: parseInt(optional('PORT', '4000'), 10),

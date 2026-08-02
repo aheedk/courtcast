@@ -274,12 +274,7 @@ export function MapView({
       )}
 
       {userLocation && (
-        <Marker
-          position={userLocation}
-          title="You are here"
-          icon={buildLocateArrowIcon()}
-          zIndex={1000}
-        />
+        <Marker position={userLocation} title="You are here" icon={buildLocateArrowIcon()} zIndex={1000} />
       )}
     </GoogleMap>
   );

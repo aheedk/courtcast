@@ -299,28 +299,33 @@ describe('POST /api/places/:placeId/reports', () => {
 describe('GET /api/places/:placeId/report', () => {
   it('returns the latest report when one exists within the 24h window', async () => {
     courtExists();
-    prismaMock.courtReport.findFirst.mockResolvedValue({
+    prismaMock.courtReport.findMany.mockResolvedValue([{
       openCourts: 'two',
       condition: 'dry',
       createdAt: new Date('2026-05-18T11:00:00Z'),
-    });
+    }]);
     const res = await request(app).get(`/api/places/${PLACE_ID}/report`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       openCourts: 'two',
       condition: 'dry',
       createdAt: '2026-05-18T11:00:00.000Z',
+      reportCount: 1,
+      confidence: 'low',
+      agreementPct: 100,
+      conditionCounts: { dry: 1 },
+      openCourtsCounts: { two: 1 },
     });
     // The query filters by createdAt > cutoff, so the test verifies the
     // route is asking prisma for *fresh* rows specifically.
-    const args = prismaMock.courtReport.findFirst.mock.calls[0][0];
+    const args = prismaMock.courtReport.findMany.mock.calls[0][0];
     expect(args.where.placeId).toBe(PLACE_ID);
     expect(args.where.createdAt).toBeDefined();
   });
 
   it('204 when no fresh report exists', async () => {
     courtExists();
-    prismaMock.courtReport.findFirst.mockResolvedValue(null);
+    prismaMock.courtReport.findMany.mockResolvedValue([]);
     const res = await request(app).get(`/api/places/${PLACE_ID}/report`);
     expect(res.status).toBe(204);
   });
@@ -341,7 +346,7 @@ describe('GET /api/places/:placeId/report', () => {
     expect(res.status).toBe(204);
     // The report findFirst should not have been called — visibility check
     // short-circuits before the DB hit.
-    expect(prismaMock.courtReport.findFirst).not.toHaveBeenCalled();
+    expect(prismaMock.courtReport.findMany).not.toHaveBeenCalled();
   });
 });
 
@@ -381,8 +386,8 @@ describe('POST /api/places/reports/batch', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.reports).toEqual({
-      p1: { openCourts: 'one', condition: 'dry', createdAt: '2026-05-18T11:00:00.000Z' },
-      p2: { openCourts: 'three_plus', condition: 'little_wet', createdAt: '2026-05-18T11:30:00.000Z' },
+      p1: { openCourts: 'one', condition: 'dry', createdAt: '2026-05-18T11:00:00.000Z', reportCount: 2, confidence: 'medium', agreementPct: 50, conditionCounts: { dry: 1, unplayable: 1 }, openCourtsCounts: { one: 1, none: 1 } },
+      p2: { openCourts: 'three_plus', condition: 'little_wet', createdAt: '2026-05-18T11:30:00.000Z', reportCount: 1, confidence: 'low', agreementPct: 100, conditionCounts: { little_wet: 1 }, openCourtsCounts: { three_plus: 1 } },
       p3: null,
     });
   });
@@ -418,7 +423,7 @@ describe('POST /api/places/reports/batch', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.reports).toEqual({
-      p1: { openCourts: 'one', condition: 'dry', createdAt: '2026-05-18T11:00:00.000Z' },
+      p1: { openCourts: 'one', condition: 'dry', createdAt: '2026-05-18T11:00:00.000Z', reportCount: 1, confidence: 'low', agreementPct: 100, conditionCounts: { dry: 1 }, openCourtsCounts: { one: 1 } },
       p2: null,
     });
   });

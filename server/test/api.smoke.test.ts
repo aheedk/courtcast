@@ -119,4 +119,12 @@ describe('api smoke', () => {
     const res = await request(app).delete('/api/me/lists/abc/members/p/tennis');
     expect(res.status).toBe(401);
   });
+
+  it('GET /api/notifications → 401 without session', async () => {
+    expect((await request(app).get('/api/notifications')).status).toBe(401);
+  });
+
+  it('GET /api/widget → 401 without session', async () => {
+    expect((await request(app).get('/api/widget')).status).toBe(401);
+  });
 });

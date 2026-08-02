@@ -24,4 +24,12 @@ describe('playability scoring', () => {
       expect(score({ tempF: 70, windMph: wind, rainPctNext2h: rain })).toBe(expected);
     });
   }
+
+  it('dangerous apparent heat overrides otherwise good weather', () => {
+    expect(score({ tempF: 92, apparentTempF: 106, windMph: 5, rainPctNext2h: 5 })).toBe('BAD');
+  });
+
+  it('dangerous gusts override otherwise good weather', () => {
+    expect(score({ tempF: 70, windMph: 10, windGustMph: 38, rainPctNext2h: 5 })).toBe('BAD');
+  });
 });

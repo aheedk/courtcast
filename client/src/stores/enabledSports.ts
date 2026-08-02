@@ -13,9 +13,9 @@ export function readEnabledSports(): Sport[] {
     if (!raw) return [...DEFAULT_ENABLED];
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [...DEFAULT_ENABLED];
-    const set = new Set(arr.filter((s): s is Sport => SPORTS.includes(s)));
-    if (set.size === 0) return [...DEFAULT_ENABLED];
-    return SPORTS.filter((s) => set.has(s));
+    const ordered = arr.filter((sport, index): sport is Sport => SPORTS.includes(sport) && arr.indexOf(sport) === index);
+    if (ordered.length === 0) return [...DEFAULT_ENABLED];
+    return ordered;
   } catch {
     return [...DEFAULT_ENABLED];
   }
@@ -35,7 +35,7 @@ export function useEnabledSports(): [Sport[], (next: Sport[]) => void] {
   }, []);
 
   const update = (next: Sport[]) => {
-    const ordered = SPORTS.filter((s) => next.includes(s));
+    const ordered = next.filter((sport, index): sport is Sport => SPORTS.includes(sport) && next.indexOf(sport) === index);
     const safe = ordered.length > 0 ? ordered : [...DEFAULT_ENABLED];
     setV(safe);
     window.localStorage.setItem(KEY, JSON.stringify(safe));

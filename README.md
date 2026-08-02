@@ -31,7 +31,7 @@ thresholds**.
 | Server | Node 20 + Express + TypeScript + Prisma |
 | DB | PostgreSQL (Docker locally; Railway-managed in prod) |
 | Auth | Google Sign-In on web and Sign in with Apple on iOS → server-side ID token verification → HTTP-only `cc_session` cookie |
-| Weather | Open-Meteo (hourly, 48h, no key) — default; OpenWeatherMap (5-day/3-hour, interpolated to hourly) as automatic fallback when configured. Geohash-5 cached 1 hour via `weather.ts` dispatcher. |
+| Weather | Open-Meteo (hourly, 7-day, no key) — default; OpenWeatherMap (5-day/3-hour, first 48h interpolated to hourly) as automatic fallback when configured. Geohash-5 cached 1 hour via `weather.ts` dispatcher. |
 | Places | Google Maps Places Nearby Search (geohash-4 cached 7 days) |
 
 ## Features (rough chronological build order)
@@ -49,6 +49,7 @@ thresholds**.
 | 9 | **`/settings` page** — account info, **playability threshold sliders**, default sport, sign out (avatar in top bar now opens Settings instead of signing out) |
 | 10 | **Sport toggles** — built-in list expanded to 9 sports (added soccer / volleyball / football / baseball / hockey); user picks which subset to show as tabs/chips via Settings |
 | 11 | **Per-sport thresholds** — tab row in Settings → Playability so each sport can have its own GOOD/OK/BAD rules. The score on a card uses `court.sport`'s thresholds; the score on the map and CourtPanel uses the current chip's thresholds. |
+| 12 | **Court intelligence + community** — compact daylight-only best windows with day selection, heat/UV/gust safety notices, drying estimates, a dedicated ranked Nearby tab, compare mode, richer court facts and booking links, report confidence, per-court group chat, alerts, and `/api/widget`. |
 
 UI polish along the way: dark star outlines for visibility, mobile
 top-bar fix (no wrapping), `100dvh` fix so the map fills the viewport
@@ -87,7 +88,7 @@ npm run dev --prefix client   # http://localhost:5173 — open this
 
 ### Tests
 ```bash
-npm test --prefix server   # 53 tests as of last commit
+npm test --prefix server   # 87 tests
 ```
 
 ## Production env
@@ -110,6 +111,8 @@ The client-side env vars (`VITE_GOOGLE_MAPS_KEY`,
 `VITE_GOOGLE_OAUTH_CLIENT_ID`, `VITE_APPLE_CLIENT_ID`,
 `VITE_APPLE_REDIRECT_URI`, optional `VITE_API_BASE_URL`) are baked into the Vite build — set
 them on Railway's *server* service since the build runs there.
+
+Browser-open notifications use the standard Notifications API and need no additional key. Closed-app web push and native iOS widgets still require platform setup (VAPID/APNs credentials and native widget targets); `/api/notifications/push-subscriptions` and `/api/widget` are the server handoff points for that work.
 
 ## iOS / TestFlight
 
@@ -138,12 +141,13 @@ client/                          Vite + React frontend
                                  queryClient, env
 
 server/                          Express + Prisma backend
-  prisma/schema.prisma           User, Session, Court, SavedCourt, List,
-                                 ListMember, WeatherCache, PlacesCache
+  prisma/schema.prisma           Core users/courts/saves plus reports,
+                                 chat, notifications and push subscriptions
   src/
     routes/                      auth, courts, weather, playability, court,
                                  meCourts (saved + nickname + custom),
-                                 meLists (lists CRUD + members)
+                                 meLists, reports, chat,
+                                 notifications, widget
     lib/                         google (Places + ID token verifier),
                                  weather (dispatcher), openmeteo,
                                  openweather (now returns Forecast),
@@ -208,8 +212,8 @@ DEPLOY.md                        Old Netlify + Railway flow — partly stale
   `trig_01KD12VvGPQnspTqWwfNDE13`, fire date 2026-05-11) has been
   canceled because this work absorbs it.
 - **Time-changer — live.** Bottom-of-map slider on the MapPage and a
-  time-pill / bottom-sheet on My Courts let users scrub the next 48h
-  in 2-hour increments. Pin colors, court panel, and saved-card scores
+  time-pill / bottom-sheet on My Courts let users scrub the next 48 hours
+  in selectable 30-minute, 1-hour, or 2-hour increments. Pin colors, court panel, and saved-card scores
   all reflect the selected time.
 
 ## Known issues
@@ -233,8 +237,9 @@ The most recent (and most impactful) reads:
 ## Default playability rule (server-side baseline)
 
 ```
-GOOD   rain probability < 30%   AND   wind < 12 mph
-BAD    rain probability >= 60%
+GOOD   rain probability < 30%   AND   wind < 15 mph
+BAD    rain probability > 60% OR wind >= 25 mph
+       OR apparent temperature >= 105°F OR gusts >= 35 mph
 OK     everything else
 ```
 

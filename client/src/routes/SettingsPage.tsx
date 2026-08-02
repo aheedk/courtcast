@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useThresholds } from '../stores/thresholds';
 import { useSport } from '../stores/sport';
@@ -9,6 +9,7 @@ import { PlayabilityBadge } from '../components/PlayabilityBadge';
 import { scoreFromThresholds } from '../lib/playability';
 import { SPORTS, SPORT_EMOJI, SPORT_LABEL } from '../types';
 import type { Sport, User } from '../types';
+import { queryKeys } from '../lib/queryClient';
 
 export function SettingsPage({ user }: { user: User }) {
   const [sport, setSport] = useSport();
@@ -34,6 +35,11 @@ export function SettingsPage({ user }: { user: User }) {
       window.location.href = '/login';
     },
   });
+  const notificationPreferences = useQuery({ queryKey: queryKeys.notificationPreferences, queryFn: api.notificationPreferences });
+  const updateNotifications = useMutation({
+    mutationFn: api.updateNotificationPreferences,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.notificationPreferences }),
+  });
 
   // Constraints: rainMaxGood < rainMaxOk so GOOD remains reachable.
   const rainGoodMax = Math.max(0, thresholds.rainMaxOk - 1);
@@ -50,6 +56,24 @@ export function SettingsPage({ user }: { user: User }) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
+
+      <section className="bg-white border border-neutral-200 rounded-2xl p-5">
+        <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-1">Smart alerts</h2>
+        <p className="text-sm text-neutral-500 mb-4">Choose which court changes should reach your inbox.</p>
+        {notificationPreferences.data && <div className="space-y-3">
+          <PreferenceToggle label="A saved court becomes playable" checked={notificationPreferences.data.preferences.playableAlerts} onChange={(playableAlerts) => updateNotifications.mutate({ playableAlerts })} />
+          <PreferenceToggle label="Fresh community reports" checked={notificationPreferences.data.preferences.reportAlerts} onChange={(reportAlerts) => updateNotifications.mutate({ reportAlerts })} />
+          <PreferenceToggle label="Court group-chat messages" checked={notificationPreferences.data.preferences.chatAlerts} onChange={(chatAlerts) => updateNotifications.mutate({ chatAlerts })} />
+          <PreferenceToggle label="Browser notifications while CourtClimate is open" checked={notificationPreferences.data.preferences.browserAlerts} onChange={async (browserAlerts) => {
+            if (browserAlerts && 'Notification' in window) {
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') return;
+            }
+            updateNotifications.mutate({ browserAlerts });
+          }} />
+        </div>}
+        <p className="mt-3 text-[11px] text-neutral-400">Closed-app web push requires VAPID keys in the deployment. In-app and browser-open alerts work without them.</p>
+      </section>
 
       <section className="bg-white border border-neutral-200 rounded-2xl p-5">
         <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
@@ -74,25 +98,7 @@ export function SettingsPage({ user }: { user: User }) {
           Customize when GOOD / OK / BAD applies — different per sport.
         </p>
 
-        <div className="flex flex-wrap gap-2 mb-4">
-          {enabledSports.map((s) => {
-            const active = s === activeSport;
-            return (
-              <button
-                key={s}
-                onClick={() => setActiveSport(s)}
-                aria-pressed={active}
-                className={
-                  active
-                    ? 'shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold bg-neutral-900 text-white'
-                    : 'shrink-0 px-3 py-1.5 rounded-full text-sm font-semibold bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-50'
-                }
-              >
-                {SPORT_EMOJI[s]} {SPORT_LABEL[s]}
-              </button>
-            );
-          })}
-        </div>
+        <div className="mb-4 max-w-xs"><SportChips value={activeSport} onChange={setActiveSport} sports={enabledSports} label="Threshold sport" /></div>
 
         <ThresholdSlider
           label="Rain — GOOD when below"
@@ -145,32 +151,10 @@ export function SettingsPage({ user }: { user: User }) {
           Sports
         </h2>
         <p className="text-sm text-neutral-500 mb-4">
-          Pick which sports show as tabs and chips.
+          Choose which sports appear in dropdowns and arrange their order.
         </p>
-        <div className="flex flex-wrap gap-2">
-          {SPORTS.map((s) => {
-            const isEnabled = enabledSports.includes(s);
-            const isLast = isEnabled && enabledSports.length === 1;
-            return (
-              <button
-                key={s}
-                onClick={() => {
-                  if (isLast) return;
-                  setEnabledSports(toggleSport(s, enabledSports));
-                }}
-                disabled={isLast}
-                aria-pressed={isEnabled}
-                className={
-                  isEnabled
-                    ? 'bg-good text-white px-3 py-1.5 rounded-full text-sm font-semibold disabled:opacity-80'
-                    : 'bg-white text-neutral-700 border border-neutral-300 px-3 py-1.5 rounded-full text-sm font-semibold hover:bg-neutral-50'
-                }
-              >
-                {SPORT_EMOJI[s]} {SPORT_LABEL[s]}
-              </button>
-            );
-          })}
-        </div>
+        <div className="space-y-2">{enabledSports.map((enabledSport, index) => <div key={enabledSport} className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 p-2"><span className="min-w-0 flex-1 text-sm font-bold text-emerald-950"><span className="mr-2 text-base">{SPORT_EMOJI[enabledSport]}</span>{SPORT_LABEL[enabledSport]}{index === 0 && <span className="ml-2 text-[10px] font-bold uppercase tracking-wide text-emerald-600">First</span>}</span><button type="button" aria-label={`Move ${SPORT_LABEL[enabledSport]} up`} disabled={index === 0} onClick={() => setEnabledSports(moveSport(enabledSports, index, index - 1))} className="h-8 w-8 rounded-lg border border-emerald-200 bg-white text-emerald-800 disabled:opacity-30">↑</button><button type="button" aria-label={`Move ${SPORT_LABEL[enabledSport]} down`} disabled={index === enabledSports.length - 1} onClick={() => setEnabledSports(moveSport(enabledSports, index, index + 1))} className="h-8 w-8 rounded-lg border border-emerald-200 bg-white text-emerald-800 disabled:opacity-30">↓</button><button type="button" disabled={enabledSports.length === 1} onClick={() => setEnabledSports(toggleSport(enabledSport, enabledSports))} className="rounded-lg px-2 py-1 text-xs font-semibold text-red-600 disabled:opacity-30">Remove</button></div>)}</div>
+        {SPORTS.some((availableSport) => !enabledSports.includes(availableSport)) && <div className="mt-4"><p className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-500">Add a sport</p><div className="flex flex-wrap gap-2">{SPORTS.filter((availableSport) => !enabledSports.includes(availableSport)).map((availableSport) => <button key={availableSport} onClick={() => setEnabledSports([...enabledSports, availableSport])} className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-semibold text-neutral-700 hover:border-emerald-300">+ {SPORT_EMOJI[availableSport]} {SPORT_LABEL[availableSport]}</button>)}</div></div>}
         {enabledSports.length === 1 && (
           <p className="text-xs text-neutral-500 mt-3">At least one sport must stay enabled.</p>
         )}
@@ -181,9 +165,9 @@ export function SettingsPage({ user }: { user: User }) {
           Default sport
         </h2>
         <p className="text-sm text-neutral-500 mb-4">
-          The sport chip selected when you open the map.
+          The sport selected when you open the app. Tennis is the initial default.
         </p>
-        <SportChips value={sport} onChange={setSport} sports={enabledSports} />
+        <div className="max-w-xs"><SportChips value={sport} onChange={setSport} sports={enabledSports} label="Default sport" /></div>
       </section>
 
       <button
@@ -195,6 +179,18 @@ export function SettingsPage({ user }: { user: User }) {
       </button>
     </div>
   );
+}
+
+function PreferenceToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label className="flex cursor-pointer items-center justify-between gap-3 text-sm"><span className="font-medium text-neutral-700">{label}</span><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-4 w-4 accent-emerald-700" /></label>;
+}
+
+function moveSport(sports: Sport[], from: number, to: number): Sport[] {
+  if (to < 0 || to >= sports.length) return sports;
+  const next = [...sports];
+  const [sport] = next.splice(from, 1);
+  next.splice(to, 0, sport);
+  return next;
 }
 
 interface ThresholdSliderProps {

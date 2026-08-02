@@ -91,4 +91,35 @@ router.patch('/:placeId/visibility', requireAuth, async (req, res, next) => {
   }
 });
 
+const courtFactsSchema = z.object({
+  surface: z.enum(['hard', 'clay', 'grass', 'asphalt', 'concrete', 'wood', 'turf', 'other']).nullable().optional(),
+  courtCount: z.number().int().min(1).max(50).nullable().optional(),
+  hasLights: z.boolean().nullable().optional(),
+  indoor: z.boolean().nullable().optional(),
+  access: z.enum(['free', 'paid', 'members', 'reservation', 'unknown']).nullable().optional(),
+  hours: z.string().trim().max(160).nullable().optional(),
+  amenities: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
+  bookingUrl: z.string().url().max(500).nullable().optional(),
+}).refine((value) => Object.keys(value).length > 0, { message: 'Provide at least one court fact' });
+
+router.patch('/:placeId/facts', requireAuth, async (req, res, next) => {
+  try {
+    const input = courtFactsSchema.parse(req.body);
+    const court = await prisma.court.findUnique({ where: { placeId: req.params.placeId } });
+    if (!court || !canSeeCourt(court, req.user!.id)) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Court not found' } });
+    }
+    const current = court.facts && typeof court.facts === 'object' && !Array.isArray(court.facts)
+      ? court.facts as Record<string, unknown>
+      : {};
+    const updated = await prisma.court.update({
+      where: { placeId: court.placeId },
+      data: { facts: { ...current, ...input }, factsUpdatedAt: new Date() },
+    });
+    res.json({ court: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

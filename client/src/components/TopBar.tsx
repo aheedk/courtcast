@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import type { User } from '../types';
 import { LogoMark } from './LogoMark';
+import { NotificationMenu } from './NotificationMenu';
 
 const navLink =
   'px-2.5 sm:px-3 py-1.5 rounded-full text-sm font-semibold text-neutral-600 hover:text-emerald-950 hover:bg-white/70 whitespace-nowrap';
@@ -25,15 +26,18 @@ export function TopBar({ user }: { user: User | null }) {
             </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-1.5 shrink-0">
+        <nav className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           <NavLink to="/" end className={({ isActive }) => `${navLink} ${isActive ? navLinkActive : ''}`}>
             Map
           </NavLink>
+          <NavLink to="/nearby" className={({ isActive }) => `${navLink} ${isActive ? navLinkActive : ''}`}>
+            Nearby
+          </NavLink>
           <NavLink to="/my-courts" className={({ isActive }) => `${navLink} ${isActive ? navLinkActive : ''}`}>
-            My Courts
+            <span className="sm:hidden">Courts</span><span className="hidden sm:inline">My Courts</span>
           </NavLink>
           {user ? (
-            <NavLink
+            <><NotificationMenu /><NavLink
               to="/settings"
               className="ml-1 flex items-center gap-2 px-1 py-1 rounded-full hover:bg-neutral-100"
               title="Settings"
@@ -53,7 +57,7 @@ export function TopBar({ user }: { user: User | null }) {
               <span className="text-sm font-medium text-emerald-900 hidden sm:inline">
                 {user.name?.split(' ')[0] ?? 'You'}
               </span>
-            </NavLink>
+            </NavLink></>
           ) : (
             <NavLink
               to="/login"

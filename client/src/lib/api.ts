@@ -12,6 +12,10 @@ import type {
   OpenCourts,
   CourtCondition,
   CourtVisibility,
+  CourtFacts,
+  CourtChatMessage,
+  AppNotification,
+  NotificationPreferences,
 } from '../types';
 import { env } from './env';
 
@@ -101,6 +105,12 @@ export const api = {
       body: JSON.stringify({ visibility }),
     }),
 
+  updateCourtFacts: (placeId: string, facts: Partial<CourtFacts>) =>
+    request<{ court: Court }>(`/api/court/${placeId}/facts`, {
+      method: 'PATCH',
+      body: JSON.stringify(facts),
+    }),
+
   renameSavedCourt: (placeId: string, sport: Sport, nickname: string | null) =>
     request<{ savedCourt: { placeId: string; sport: Sport; nickname: string | null } }>(
       `/api/me/courts/${placeId}?sport=${sport}`,
@@ -141,5 +151,22 @@ export const api = {
     request<{ reports: Record<string, CourtReport | null> }>(`/api/places/reports/batch`, {
       method: 'POST',
       body: JSON.stringify({ placeIds }),
+    }),
+
+  courtMessages: (placeId: string) =>
+    request<{ messages: CourtChatMessage[] }>(`/api/court/${placeId}/messages`),
+  sendCourtMessage: (placeId: string, body: string) =>
+    request<{ message: CourtChatMessage }>(`/api/court/${placeId}/messages`, { method: 'POST', body: JSON.stringify({ body }) }),
+  deleteCourtMessage: (placeId: string, messageId: string) =>
+    request<void>(`/api/court/${placeId}/messages/${messageId}`, { method: 'DELETE' }),
+
+  notifications: () => request<{ notifications: AppNotification[]; unreadCount: number }>('/api/notifications'),
+  readNotification: (id: string) => request<void>(`/api/notifications/${id}/read`, { method: 'POST' }),
+  readAllNotifications: () => request<void>('/api/notifications/read-all', { method: 'POST' }),
+  notificationPreferences: () =>
+    request<{ preferences: NotificationPreferences }>('/api/notifications/preferences/current'),
+  updateNotificationPreferences: (preferences: Partial<NotificationPreferences>) =>
+    request<{ preferences: NotificationPreferences }>('/api/notifications/preferences/current', {
+      method: 'PATCH', body: JSON.stringify(preferences),
     }),
 };

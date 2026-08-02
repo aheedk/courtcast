@@ -8,6 +8,7 @@ import { MapPage } from './routes/MapPage';
 import { MyCourtsPage } from './routes/MyCourtsPage';
 import { LoginPage } from './routes/LoginPage';
 import { SettingsPage } from './routes/SettingsPage';
+import { NearbyPage } from './routes/NearbyPage';
 
 export function App() {
   const me = useQuery({
@@ -31,6 +32,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<MapPage user={user} />} />
         <Route path="/login" element={<LoginPage user={user} />} />
+        <Route path="/nearby" element={<NearbyPage />} />
         <Route
           path="/my-courts"
           element={

@@ -4,9 +4,10 @@ import type { Forecast, ForecastSlot } from './forecast';
 interface OWMForecastResponse {
   list: Array<{
     dt: number;
-    main: { temp: number };
-    wind: { speed: number };
+    main: { temp: number; feels_like?: number; humidity?: number };
+    wind: { speed: number; gust?: number };
     pop: number;
+    rain?: { '3h'?: number };
   }>;
 }
 
@@ -63,6 +64,10 @@ export async function fetchOpenWeatherForecast(lat: number, lng: number): Promis
         tempF: clampInt(tempA + (tempB - tempA) * frac, -100, 200),
         windMph: clampInt(windA + (windB - windA) * frac, 0, 200),
         rainPct,
+        ...(Number.isFinite(a.main.feels_like) ? { apparentTempF: clampInt(a.main.feels_like!, -100, 200) } : {}),
+        ...(Number.isFinite(a.main.humidity) ? { humidityPct: clampInt(a.main.humidity!, 0, 100) } : {}),
+        ...(Number.isFinite(a.wind.gust) ? { windGustMph: clampInt(a.wind.gust!, 0, 250) } : {}),
+        ...(Number.isFinite(a.rain?.['3h']) ? { precipitationIn: Number(((a.rain?.['3h'] ?? 0) / 25.4 / 3).toFixed(3)) } : {}),
       });
     }
   }
@@ -83,6 +88,10 @@ export async function fetchOpenWeatherForecast(lat: number, lng: number): Promis
         tempF: tempLast,
         windMph: windLast,
         rainPct: rainPctLast,
+        ...(Number.isFinite(last.main.feels_like) ? { apparentTempF: clampInt(last.main.feels_like!, -100, 200) } : {}),
+        ...(Number.isFinite(last.main.humidity) ? { humidityPct: clampInt(last.main.humidity!, 0, 100) } : {}),
+        ...(Number.isFinite(last.wind.gust) ? { windGustMph: clampInt(last.wind.gust!, 0, 250) } : {}),
+        ...(Number.isFinite(last.rain?.['3h']) ? { precipitationIn: Number(((last.rain?.['3h'] ?? 0) / 25.4 / 3).toFixed(3)) } : {}),
       });
     }
   }

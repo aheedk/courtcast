@@ -10,6 +10,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
 } from '../lib/reports';
 import { canSeeCourt, visibilityWhereClause } from '../lib/visibility';
+import { notifyCourtWatchers } from '../lib/notifications';
 
 const router = Router();
 
@@ -36,6 +37,32 @@ function serializeReport(r: { openCourts: string | null; condition: string | nul
     openCourts: r.openCourts || null,
     condition: r.condition || null,
     createdAt: r.createdAt.toISOString(),
+  };
+}
+
+function summarizeReports(rows: Array<{ openCourts: string | null; condition: string | null; createdAt: Date }>) {
+  if (rows.length === 0) return null;
+  const latest = serializeReport(rows[0]);
+  const conditionCounts: Record<string, number> = {};
+  const openCourtsCounts: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.condition) conditionCounts[row.condition] = (conditionCounts[row.condition] ?? 0) + 1;
+    if (row.openCourts) openCourtsCounts[row.openCourts] = (openCourtsCounts[row.openCourts] ?? 0) + 1;
+  }
+  const maxAgreement = Math.max(0, ...Object.values(conditionCounts), ...Object.values(openCourtsCounts));
+  const agreementPct = rows.length ? Math.round((maxAgreement / rows.length) * 100) : 0;
+  const confidence = rows.length >= 3 && agreementPct >= 67
+    ? 'high'
+    : rows.length >= 2
+      ? 'medium'
+      : 'low';
+  return {
+    ...latest,
+    reportCount: rows.length,
+    confidence,
+    agreementPct,
+    conditionCounts,
+    openCourtsCounts,
   };
 }
 
@@ -94,6 +121,14 @@ router.post('/:placeId/reports', requireAuth, async (req, res, next) => {
           },
         });
 
+    void notifyCourtWatchers({
+      placeId,
+      excludeUserId: userId,
+      type: 'report',
+      title: `Fresh status at ${court.name}`,
+      body: [input.openCourts ? `${input.openCourts.replace('_', ' ')} open` : null, input.condition?.replace('_', ' ')].filter(Boolean).join(' · '),
+    }).catch(() => undefined);
+
     res.status(201).json(serializeReport(saved));
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -115,12 +150,14 @@ router.get('/:placeId/report', async (req, res, next) => {
       // a recent report.
       return res.status(204).end();
     }
-    const latest = await prisma.courtReport.findFirst({
+    const rows = await prisma.courtReport.findMany({
       where: { placeId, createdAt: { gt: freshnessCutoff() } },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
-    if (!latest) return res.status(204).end();
-    res.json(serializeReport(latest));
+    const summary = summarizeReports(rows);
+    if (!summary) return res.status(204).end();
+    res.json(summary);
   } catch (err) {
     next(err);
   }
@@ -146,8 +183,8 @@ router.post('/reports/batch', async (req, res, next) => {
     });
     const visibleIds = new Set(visibleCourts.map((c) => c.placeId));
 
-    // Pull all reports across the visible places within the 24h window
-    // in one query, then keep only the latest per placeId.
+    // Pull all reports across visible places within the 24h window and
+    // aggregate each court into a freshness/confidence summary.
     const rows = visibleIds.size === 0
       ? []
       : await prisma.courtReport.findMany({
@@ -155,15 +192,15 @@ router.post('/reports/batch', async (req, res, next) => {
           orderBy: { createdAt: 'desc' },
         });
 
-    const latestByPlaceId: Record<string, ReturnType<typeof serializeReport>> = {};
+    const rowsByPlaceId = new Map<string, typeof rows>();
     for (const row of rows) {
-      if (!latestByPlaceId[row.placeId]) {
-        latestByPlaceId[row.placeId] = serializeReport(row);
-      }
+      const grouped = rowsByPlaceId.get(row.placeId) ?? [];
+      grouped.push(row);
+      rowsByPlaceId.set(row.placeId, grouped);
     }
 
-    const reports: Record<string, ReturnType<typeof serializeReport> | null> = {};
-    for (const id of placeIds) reports[id] = latestByPlaceId[id] ?? null;
+    const reports: Record<string, ReturnType<typeof summarizeReports>> = {};
+    for (const id of placeIds) reports[id] = summarizeReports(rowsByPlaceId.get(id) ?? []);
 
     res.json({ reports });
   } catch (err) {

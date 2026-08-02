@@ -27,9 +27,8 @@ export async function fetchForecast(
   lat: number,
   lng: number,
 ): Promise<{ forecast: Forecast; stale: boolean }> {
-  // Cache key v2: forecast shape replaces the old WeatherSummary snapshot
-  // (Tasks 1-5 of the time-changer feature). Old rows are skipped.
-  const geohash = `${geohashFor(lat, lng, PRECISION.weather)}:v2`;
+  // v3 includes extended safety, UV, humidity, gust, and drying fields.
+  const geohash = `${geohashFor(lat, lng, PRECISION.weather)}:v3`;
   const cached = await getCached<Forecast>('weatherCache', geohash, TTL.weatherMs);
   const usableCached = cached && isUsableCachedForecast(cached.payload) ? cached : null;
   if (usableCached && !usableCached.stale) {

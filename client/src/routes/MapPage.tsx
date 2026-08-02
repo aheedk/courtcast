@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { useUi } from '../stores/ui';
@@ -8,7 +9,8 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { useThresholds } from '../stores/thresholds';
 import { useEnabledSports } from '../stores/enabledSports';
 import { useSelectedTime } from '../stores/selectedTime';
-import { slotAt, rainPctOverWindow, SLIDER_STEP_HOURS } from '../lib/forecast';
+import { useForecastStep } from '../stores/forecastStep';
+import { slotAt, rainPctOverWindow } from '../lib/forecast';
 import { scoreFromThresholds } from '../lib/playability';
 import { MapView, type MapViewport, type PinForMap } from '../components/MapView';
 import { CourtPanel } from '../components/CourtPanel';
@@ -48,6 +50,11 @@ function zoomForRefresh(viewport: MapViewport): number {
 export function MapPage({ user }: { user: User | null }) {
   const { position: geoPosition, source } = useGeolocation();
   const { selectedPlaceId, selectCourt } = useUi();
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const requestedCourt = searchParams.get('court');
+    if (requestedCourt) selectCourt(requestedCourt);
+  }, [searchParams, selectCourt]);
   const [sport, setSport] = useSport();
   const [thresholds] = useThresholds(sport);
   const [enabledSports] = useEnabledSports();
@@ -66,8 +73,8 @@ export function MapPage({ user }: { user: User | null }) {
   const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
   const [zoomRequest, setZoomRequest] = useState<{ id: number; zoom: number; center: { lat: number; lng: number } } | null>(null);
   const [refreshAfterZoom, setRefreshAfterZoom] = useState(false);
-  // Captured GPS position from the locate-me button. Re-set on each tap;
-  // the marker stays at the captured spot when the map is panned away.
+  // Captured only when the locate button is pressed, so the marker does not
+  // consume map space or keep moving during ordinary browsing.
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const customEmpty = sport === 'custom' && !keyword.trim();
@@ -131,17 +138,18 @@ export function MapPage({ user }: { user: User | null }) {
   });
 
   const [selectedMs] = useSelectedTime();
+  const [forecastStepHours] = useForecastStep();
 
   function scorePin(forecast: typeof placesPins[number]['forecast'] | null, fallback: typeof placesPins[number]['score'] | null = null) {
     const slot = slotAt(forecast ?? null, selectedMs);
     if (slot) {
       // For slider-selected times, score against the max rain over the
-      // 2-hour bucket so pin colors match what the panel/cards display.
+      // selected interval so pin colors match what the panel/cards display.
       const rainPctNext2h = selectedMs !== null
-        ? (rainPctOverWindow(forecast ?? null, selectedMs, SLIDER_STEP_HOURS) ?? slot.rainPct)
+        ? (rainPctOverWindow(forecast ?? null, selectedMs, forecastStepHours) ?? slot.rainPct)
         : slot.rainPct;
       return scoreFromThresholds(
-        { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h },
+        { tempF: slot.tempF, windMph: slot.windMph, rainPctNext2h, apparentTempF: slot.apparentTempF, windGustMph: slot.windGustMph, uvIndex: slot.uvIndex },
         thresholds,
       );
     }
@@ -202,6 +210,7 @@ export function MapPage({ user }: { user: User | null }) {
       })),
   ];
 
+
   return (
     <div className="relative h-[calc(100dvh-4rem)] bg-sky-50">
       <div className="absolute top-3 left-0 right-0 z-20 flex flex-col gap-2 pointer-events-none">
@@ -221,8 +230,8 @@ export function MapPage({ user }: { user: User | null }) {
             }}
           />
         </div>
-        <div className="pointer-events-auto">
-          <SportChips value={sport} onChange={setSport} sports={enabledSports} />
+        <div className="pointer-events-auto mx-auto w-56">
+          <SportChips value={sport} onChange={setSport} sports={enabledSports} label="Map sport" />
         </div>
       </div>
 
@@ -274,6 +283,7 @@ export function MapPage({ user }: { user: User | null }) {
       )}
 
       {!!user && <MapLegend />}
+
 
       {source === 'default' && !addMode && (
         <div className="absolute top-40 left-1/2 -translate-x-1/2 z-10 bg-gradient-to-r from-white/95 to-amber-50/95 shadow-md shadow-amber-950/10 border border-amber-100 rounded-full px-4 py-1 text-[11px] text-amber-900">
@@ -335,7 +345,7 @@ export function MapPage({ user }: { user: User | null }) {
       )}
 
       {!addMode && (
-        <div className="absolute bottom-3 left-3 right-3 z-20 pointer-events-auto">
+        <div className="absolute bottom-3 left-3 right-3 z-20 mx-auto max-w-[88rem] pointer-events-auto">
           <TimeScrubber />
         </div>
       )}

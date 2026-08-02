@@ -55,28 +55,7 @@ export function MyCourtsPage({ user }: { user: User }) {
           </span>
         </div>
 
-        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1 mb-5 -mx-1 px-1">
-          {tabs.map((t) => {
-            const active = t.value === tab;
-            return (
-              <button
-                key={t.value}
-                onClick={() => {
-                  setTab(t.value);
-                  setSelectedListId(null);
-                }}
-                className={
-                  active
-                    ? 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-emerald-950 text-white shadow-md shadow-emerald-950/15'
-                    : 'shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/80 text-emerald-950 border border-emerald-100 hover:bg-white hover:border-emerald-200'
-                }
-                aria-pressed={active}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+        <label className="mb-5 block max-w-xs"><span className="sr-only">Filter My Courts by sport</span><span className="relative block"><select value={tab} onChange={(event) => { setTab(event.target.value as TabValue); setSelectedListId(null); }} className="w-full appearance-none rounded-xl border border-emerald-200 bg-white py-2.5 pl-3 pr-10 text-sm font-bold text-emerald-950 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200">{tabs.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><span aria-hidden className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-emerald-700">⌄</span></span></label>
 
         {tab === 'custom' ? (
           selectedListId ? (

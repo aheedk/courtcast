@@ -5,6 +5,12 @@ export interface ForecastSlot {
   tempF: number;
   windMph: number;
   rainPct: number;  // 0..100
+  apparentTempF?: number;
+  humidityPct?: number;
+  windGustMph?: number;
+  precipitationIn?: number;
+  uvIndex?: number;
+  solarRadiationWm2?: number;
 }
 
 export interface Forecast {
@@ -24,5 +30,9 @@ export function weatherFromForecast(forecast: Forecast | null): WeatherSummary |
     tempF: slot.tempF,
     windMph: slot.windMph,
     rainPctNext2h: slot.rainPct,
+    apparentTempF: slot.apparentTempF,
+    humidityPct: slot.humidityPct,
+    windGustMph: slot.windGustMph,
+    uvIndex: slot.uvIndex,
   };
 }
