@@ -1,15 +1,15 @@
 import type { PlayabilityScore, WeatherSummary } from '../types';
 
 export interface Thresholds {
-  rainMaxGood: number; // GOOD requires rain < this
-  rainMaxOk: number;   // BAD when rain >= this
+  rainMaxGood: number; // GOOD allows rain <= this
+  rainMaxOk: number;   // BAD when rain > this
   windMaxGood: number; // GOOD requires wind < this
   windMaxOk: number;   // BAD when wind >= this
 }
 
 export const DEFAULT_THRESHOLDS: Thresholds = {
-  rainMaxGood: 30,
-  rainMaxOk: 60,
+  rainMaxGood: 15,
+  rainMaxOk: 30,
   windMaxGood: 15,
   windMaxOk: 25,
 };
@@ -19,8 +19,8 @@ export function scoreFromThresholds(
   t: Thresholds,
 ): PlayabilityScore {
   if ((weather.apparentTempF ?? weather.tempF) >= 105 || (weather.windGustMph ?? 0) >= 35) return 'BAD';
-  if (weather.rainPctNext2h >= t.rainMaxOk || weather.windMph >= t.windMaxOk) return 'BAD';
-  if (weather.rainPctNext2h < t.rainMaxGood && weather.windMph < t.windMaxGood) {
+  if (weather.rainPctNext2h > t.rainMaxOk || weather.windMph >= t.windMaxOk) return 'BAD';
+  if (weather.rainPctNext2h <= t.rainMaxGood && weather.windMph < t.windMaxGood) {
     return 'GOOD';
   }
   return 'OK';

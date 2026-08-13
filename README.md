@@ -237,8 +237,8 @@ The most recent (and most impactful) reads:
 ## Default playability rule (server-side baseline)
 
 ```
-GOOD   rain probability < 30%   AND   wind < 15 mph
-BAD    rain probability > 60% OR wind >= 25 mph
+GOOD   rain probability <= 15%  AND   wind < 15 mph
+BAD    rain probability > 30% OR wind >= 25 mph
        OR apparent temperature >= 105°F OR gusts >= 35 mph
 OK     everything else
 ```

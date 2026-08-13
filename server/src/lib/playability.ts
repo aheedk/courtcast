@@ -11,21 +11,21 @@ export interface WeatherSummary {
 }
 
 /**
- * GOOD  rain < 30 AND wind < 15
- * BAD   rain > 60 OR wind >= 25
+ * GOOD  rain <= 15 AND wind < 15
+ * BAD   rain > 30 OR wind >= 25
  * OK    everything else
  *
- * Boundaries: rain==30 → not GOOD; rain==60 → not BAD; wind==15 → not GOOD;
- * wind==25 → BAD (wind uses >= so 25 mph is unplayable).
+ * Boundaries: rain==15 -> GOOD; rain==30 -> not BAD; wind==15 -> not GOOD;
+ * wind==25 -> BAD.
  */
 export function score(weather: WeatherSummary): PlayabilityScore {
   const { rainPctNext2h, windMph, apparentTempF, windGustMph } = weather;
   if (
-    rainPctNext2h > 60 ||
+    rainPctNext2h > 30 ||
     windMph >= 25 ||
     (windGustMph !== undefined && windGustMph >= 35) ||
     (apparentTempF !== undefined && apparentTempF >= 105)
   ) return 'BAD';
-  if (rainPctNext2h < 30 && windMph < 15) return 'GOOD';
+  if (rainPctNext2h <= 15 && windMph < 15) return 'GOOD';
   return 'OK';
 }

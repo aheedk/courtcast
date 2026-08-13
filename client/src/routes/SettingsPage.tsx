@@ -101,7 +101,7 @@ export function SettingsPage({ user }: { user: User }) {
         <div className="mb-4 max-w-xs"><SportChips value={activeSport} onChange={setActiveSport} sports={enabledSports} label="Threshold sport" /></div>
 
         <ThresholdSlider
-          label="Rain — GOOD when below"
+          label="Rain — GOOD at or below"
           value={thresholds.rainMaxGood}
           min={0}
           max={rainGoodMax}
