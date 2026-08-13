@@ -28,14 +28,10 @@ export default defineConfig({
         // Don't ever cache /api responses — those are dynamic and per-user.
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            // Map tiles can be cached for the session — they're large but immutable per URL.
-            urlPattern: /^https:\/\/maps\.googleapis\.com\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-maps', expiration: { maxEntries: 100, maxAgeSeconds: 24 * 60 * 60 } },
-          },
-        ],
+        // Google requires the Maps JavaScript loader to be fetched directly
+        // from its servers. Do not add maps.googleapis.com runtime caching
+        // here: a cached loader can trigger NotLoadingAPIFromGoogleMapsError.
+        runtimeCaching: [],
       },
     }),
   ],

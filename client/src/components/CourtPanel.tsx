@@ -124,6 +124,23 @@ export function CourtPanel({ placeId, user, onClose }: Props) {
           </button>
         </div>
 
+        {detail.data && (
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${detail.data.court.lat},${detail.data.court.lng}`)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-bold text-sky-800 shadow-sm hover:border-sky-300 hover:bg-sky-100"
+            aria-label={`Get directions to ${displayName ?? detail.data.court.name} in Google Maps`}
+          >
+            <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11Z" />
+              <circle cx="12" cy="10" r="2" />
+            </svg>
+            Directions in Google Maps
+            <span aria-hidden>↗</span>
+          </a>
+        )}
+
         {detail.isLoading && <p className="mt-6 text-neutral-500">Fetching weather…</p>}
 
         {detail.isError && (

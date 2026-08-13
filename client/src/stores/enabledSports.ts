@@ -4,7 +4,13 @@ import { SPORTS, type Sport } from '../types';
 const KEY = 'courtclimate.enabledSports';
 const CHANGED_EVENT = 'courtclimate.enabledSports.changed';
 
-const DEFAULT_ENABLED: readonly Sport[] = ['tennis', 'basketball', 'pickleball', 'custom'];
+const DEFAULT_ENABLED: readonly Sport[] = SPORTS;
+const LEGACY_DEFAULT: readonly Sport[] = ['tennis', 'basketball', 'pickleball', 'custom'];
+
+function matchesLegacyDefault(sports: readonly Sport[]): boolean {
+  return sports.length === LEGACY_DEFAULT.length
+    && sports.every((sport, index) => sport === LEGACY_DEFAULT[index]);
+}
 
 export function readEnabledSports(): Sport[] {
   if (typeof window === 'undefined') return [...DEFAULT_ENABLED];
@@ -15,6 +21,8 @@ export function readEnabledSports(): Sport[] {
     if (!Array.isArray(arr)) return [...DEFAULT_ENABLED];
     const ordered = arr.filter((sport, index): sport is Sport => SPORTS.includes(sport) && arr.indexOf(sport) === index);
     if (ordered.length === 0) return [...DEFAULT_ENABLED];
+    // Upgrade the previous untouched default while preserving real custom choices.
+    if (matchesLegacyDefault(ordered)) return [...DEFAULT_ENABLED];
     return ordered;
   } catch {
     return [...DEFAULT_ENABLED];

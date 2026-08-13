@@ -6,8 +6,8 @@ export type Sport =
   | 'custom';
 
 export const SPORTS: readonly Sport[] = [
-  'tennis', 'basketball', 'pickleball',
-  'soccer', 'volleyball', 'football', 'baseball', 'hockey',
+  'tennis', 'pickleball', 'basketball',
+  'soccer', 'volleyball', 'baseball', 'football', 'hockey',
   'custom',
 ] as const;
 
