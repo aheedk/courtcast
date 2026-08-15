@@ -47,7 +47,7 @@ thresholds**.
 | 7 | `'custom'` becomes a 4th sport so saving in custom mode doesn't pollute the other sport tabs |
 | 8 | Map pins **colored by playability** (green / yellow / red / gray-unknown); saved courts render as **stars** instead of circles |
 | 9 | **`/settings` page** — account info, **playability threshold sliders**, default sport, sign out (avatar in top bar now opens Settings instead of signing out) |
-| 10 | **Sport toggles** — built-in list expanded to 9 sports (added soccer / volleyball / football / baseball / hockey); user picks which subset to show as tabs/chips via Settings |
+| 10 | **Sport toggles** — built-in list expanded to 10 sports (including golf courses and driving ranges); user picks which subset to show as tabs/chips via Settings |
 | 11 | **Per-sport thresholds** — tab row in Settings → Playability so each sport can have its own GOOD/OK/BAD rules. The score on a card uses `court.sport`'s thresholds; the score on the map and CourtPanel uses the current chip's thresholds. |
 | 12 | **Court intelligence + community** — compact daylight-only best windows with day selection, heat/UV/gust safety notices, drying estimates, a dedicated ranked Nearby tab, compare mode, richer court facts and booking links, report confidence, per-court group chat, alerts, and `/api/widget`. |
 

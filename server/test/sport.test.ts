@@ -14,6 +14,9 @@ describe('buildPlacesKeyword', () => {
   it('soccer no keyword → "soccer field"', () => {
     expect(buildPlacesKeyword('soccer')).toBe('soccer field');
   });
+  it('golf no keyword → "golf"', () => {
+    expect(buildPlacesKeyword('golf')).toBe('golf');
+  });
   it('volleyball no keyword → "volleyball court"', () => {
     expect(buildPlacesKeyword('volleyball')).toBe('volleyball court');
   });
@@ -32,10 +35,10 @@ describe('buildPlacesKeyword', () => {
   it('soccer + "indoor" → "soccer field indoor"', () => {
     expect(buildPlacesKeyword('soccer', 'indoor')).toBe('soccer field indoor');
   });
-  it('SPORTS array exposes all nine in fixed order', () => {
+  it('SPORTS array exposes all ten in dropdown order', () => {
     expect(SPORTS).toEqual([
-      'tennis', 'basketball', 'pickleball',
-      'soccer', 'volleyball', 'football', 'baseball', 'hockey',
+      'tennis', 'pickleball', 'basketball',
+      'soccer', 'golf', 'volleyball', 'baseball', 'football', 'hockey',
       'custom',
     ]);
   });
